@@ -75,10 +75,9 @@ class simulator:
         for values in self.history:
             net_gain = (values[3] - values[1]) * values[2]
             self.total_gain += net_gain
-            self.history_df = pd.concat([self.history_df, \
-                {'stock': values[0], 'buy_price': values[1], 'n_shares': values[2], \
+            self.history_df = self.history_df.append({'stock': values[0], 'buy_price': values[1], 'n_shares': values[2], \
                     'sell_price': values[3], 'net_gain': net_gain, 'buy_date': values[4], \
-                        'sell_date': values[5]}], ignore_index = True)
+                        'sell_date': values[5]}, ignore_index = True)
 
             if print_results:
                 print("{:<10} {:<10} {:<10} {:<10} {:<10}".format(values[0], values[1], values[2], values[3], np.round(net_gain, 2)))
