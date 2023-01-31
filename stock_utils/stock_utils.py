@@ -87,25 +87,42 @@ def project_daily_volume(current_volume):
 
     return projected_volume
 
-def get_stock_price_realtime(ticker):
+def get_stock_price_realtime(ticker, start_date = None, end_date = None, n = 10):
     
-    stock = web.get_quote_yahoo(ticker)
+    pd_stock = web.get_quote_yahoo(ticker)
 
     #only market cap > 10 billion will be considered
-    if(stock['marketCap'][0] > 1e10):
+    if(pd_stock['marketCap'][0] > 1e10):
+        stock = yf.Ticker(ticker)
+        today = datetime.now()
+        if start_date:
+            hist = stock.history(start = start_date, end = end_date)
+        else:
+            end = today
+            start = today - timedelta(days = 50)
+            hist = stock.history(start = start, end = end)
         
-        ## Massage the data
-        hist = pd.DataFrame(columns=['High', 'Low', 'Close', 'Volume', 'normalized_value'])
-        hist['High'] = stock['regularMarketDayHigh']
-        hist['Low'] = stock['regularMarketDayLow']
-        hist['Close'] = stock['regularMarketPrice']
-        hist['Volume'] = project_daily_volume(stock['regularMarketVolume'])
-        
+        ## Massage the data            
+        today_data = {'Open': pd_stock['regularMarketOpen'][0] , \
+            'High': pd_stock['regularMarketDayHigh'][0], \
+            'Low': pd_stock['regularMarketDayLow'][0], \
+            'Close': pd_stock['regularMarketPrice'][0], \
+            'Volume': project_daily_volume(pd_stock['regularMarketVolume'][0]), \
+            'Dividends': 0, \
+            'Stock Splits': 0
+            }        
+        today_series = pd.Series(today_data, name=today)
+        hist.append(today_series)
         hist['normalized_value'] = hist.apply(lambda x: normalixed_value(x['High'], x['Low'], x['Close']), axis = 1)
+        hist['loc_min'] = hist.iloc[argrelextrema(hist['Close'].values, np.less_equal, order = n)[0]]['Close']
+        hist['loc_max'] = hist.iloc[argrelextrema(hist['Close'].values, np.greater_equal, order =n)[0]]['Close']
+
+        idx_with_mins = np.where(hist['loc_min'] > 0)[0]
+        idx_with_maxs = np.where(hist['loc_max'] > 0)[0]
     else:
         hist = np.nan
 
-    return hist, [], []
+    return hist, idx_with_mins, idx_with_maxs
     
 def create_train_data(ticker, start_date = None, end_date = None, n = 10):
     # get stock data
@@ -145,7 +162,7 @@ def create_test_data_lr(ticker, start_date = None, end_date = None, n = 10):
 
     return data.dropna(axis = 0)
 
-def create_test_data_lr_realtime(ticker, n = 10):
+def create_realtime_data_lr(ticker, n = 10):
     #get data to a dataframe
     data, _, _ = get_stock_price_realtime(ticker)
     idxs = np.arange(0, len(data))

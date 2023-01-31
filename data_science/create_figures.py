@@ -8,26 +8,29 @@ import seaborn as sns
 
 class create_figures:
 
-    def __init__(self, model_name, threshold, hold_till):
+    def __init__(self, model_name, threshold, hold_till, sell_perc, stop_perc):
         
         self.model = model_name
         self.threshold = threshold
         self.hold_till = hold_till
+        self.sell_perc = sell_perc
+        self.stop_perc = stop_perc
         
         results_dir = 'results'
-        self.folder_name = f'{str(self.model)}_{self.threshold}_{self.hold_till}'
-        self.folder_dir = os.path.join(results_dir, self.folder_name)
+        current_dir = os.getcwd()
+        self.folder_name = f'{str(self.model)}_{self.threshold}_{self.hold_till}_{self.sell_perc}_{self.stop_perc}'
+        self.folder_dir = os.path.join(current_dir, results_dir, self.folder_name)
 
-        history_df_path = os.path.join(self.folder_dir, 'history_df.csv')
+        history_df_path = os.path.join(current_dir,self.folder_dir, 'history_df.csv')
         self.history_df = pd.read_csv(history_df_path)
         self.history_df['buy_date'] = pd.to_datetime(self.history_df['buy_date'])
         self.history_df['sell_date'] = pd.to_datetime(self.history_df['sell_date'])
         
-        params_path = os.path.join(self.folder_dir, 'params')
+        params_path = os.path.join(current_dir, self.folder_dir, 'params')
         with open(params_path, 'rb') as fp:
             self.params = pickle.load(fp)
         
-        results_summary_path = os.path.join(self.folder_dir, 'results_summary')
+        results_summary_path = os.path.join(current_dir, self.folder_dir, 'results_summary')
         with open(results_summary_path, 'rb') as fp:
             self.results_summary = pickle.load(fp)
         
@@ -90,7 +93,8 @@ class create_figures:
         plt.ylabel('Total Balance ($)')
         plt.xticks(rotation = 45)
         # plt.show()
-        fig_path = os.path.join(self.folder_dir, 'total_balance_history.jpg')
+        current_dir = os.getcwd()
+        fig_path = os.path.join(current_dir, self.folder_dir, 'total_balance_history.jpg')
         plt.savefig(fig_path)
 
     def gain_loss_plot(self):
@@ -108,7 +112,8 @@ class create_figures:
         plt.ylabel('Gain ($)')
         plt.xticks(rotation = 45)
         # plt.show()
-        fig_path = os.path.join(self.folder_dir, 'gain_loss.jpg')
+        current_dir = os.getcwd()
+        fig_path = os.path.join(current_dir, self.folder_dir, 'gain_loss.jpg')
         plt.savefig(fig_path)
 
     def hold_hist(self):
@@ -125,8 +130,9 @@ class create_figures:
         plt.xticks(rotation = 45)
         plt.xlabel('Held time (days)')
         # plt.show()
-        fig_path = os.path.join(self.folder_dir, 'held_time_histogram.jpg')
+        current_dir = os.getcwd()
+        fig_path = os.path.join(current_dir, self.folder_dir, 'held_time_histogram.jpg')
         plt.savefig(fig_path)
 
-if __name__ == '__main__':
-    create_figures('LR_v1_predict', 1, 1)
+#if __name__ == '__main__':
+#    create_figures('LR_v1_predict', 0.5, 5)

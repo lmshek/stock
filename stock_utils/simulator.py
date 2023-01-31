@@ -26,7 +26,7 @@ class simulator:
         self.buy_orders[stock] = [buy_price, n_shares, buy_price * n_shares, buy_date]
 
 
-        print(f'Bought {stock} for {buy_price} on the {buy_date}. Account Balance: {self.capital}')
+        print(f'Bought {stock} for {buy_price} on the {buy_date}. Account Balance: {self.capital} \n')
 
     def sell(self, stock, sell_price, n_shares_sell, sell_date):
         """
@@ -45,7 +45,7 @@ class simulator:
             self.buy_orders[stock][1] = n_shares
             self.buy_orders[stock][2] = buy_price * n_shares
         
-        print(f'Sold {stock} for {sell_price} on {sell_date}. Account Balance: {self.capital}')
+        print(f'Sold {stock} for {sell_price} on {sell_date}. Account Balance: {self.capital} \n')
 
     def buy_percentage(self, buy_price, buy_perc = 1):
         """
