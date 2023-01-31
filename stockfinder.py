@@ -8,6 +8,7 @@ import warnings
 from collections import OrderedDict
 warnings.filterwarnings("ignore")
 import os
+from telegram.telegram import telegram
 
 
 
@@ -49,6 +50,15 @@ if __name__ == "__main__":
 
     for good_stock in finder.good_stocks:
         print(f"BUY {good_stock}")
+
+        stock = "0001.HK"
+        current_price = 123.00
+        threshold = 0.95
+        sell_perc = 0.08
+        hold_till = 10
+        stop_perc = 0.04
+
+        telegram.send_formatted_message(stock=stock, current_price=current_price, threshold=threshold, sell_perc=sell_perc, hold_till=hold_till, stop_perc=stop_perc)
 
 
         
