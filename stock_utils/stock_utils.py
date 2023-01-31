@@ -4,7 +4,9 @@ import numpy as np
 from scipy.signal import argrelextrema
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import MinMaxScaler
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
+import pandas_datareader as web
+
 
 """
 author - Rocky Shek
@@ -68,6 +70,42 @@ def get_stock_price_history(ticker, start_date = None, end_date = None, n = 10):
     idx_with_maxs = np.where(hist['loc_max'] > 0)[0]
 
     return hist, idx_with_mins, idx_with_maxs
+
+def project_daily_volume(current_volume):
+    morning_start = time(9,30,0)
+    morning_end = time(12,0,0)
+    afternoon_start = time(13,0,0)
+    afternoon_end = time(16,0,0)
+    now = datetime.now().time()
+    projected_volume = np.nan
+    if morning_start <= now < morning_end:
+        projected_volume = ((now.hour * 60 + now.minute) - (morning_start.hour * 60 + morning_start.minute)) / 330 * current_volume
+    if morning_end <= now < afternoon_start:
+        projected_volume = ((morning_end.hour * 60 + morning_end.minute) - (morning_start.hour * 60 + morning_start.minute)) / 330 * current_volume
+    if afternoon_start <= now < afternoon_end:
+        projected_volume = ((now.hour * 60 + now.minute) - (afternoon_start.hour * 60 + afternoon_start.minute) + 150) / 330 * current_volume
+
+    return projected_volume
+
+def get_stock_price_realtime(ticker):
+    
+    stock = web.get_quote_yahoo(ticker)
+
+    #only market cap > 10 billion will be considered
+    if(stock['marketCap'][0] > 1e10):
+        
+        ## Massage the data
+        hist = pd.DataFrame(columns=['High', 'Low', 'Close', 'Volume', 'normalized_value'])
+        hist['High'] = stock['regularMarketDayHigh']
+        hist['Low'] = stock['regularMarketDayLow']
+        hist['Close'] = stock['regularMarketPrice']
+        hist['Volume'] = project_daily_volume(stock['regularMarketVolume'])
+        
+        hist['normalized_value'] = hist.apply(lambda x: normalixed_value(x['High'], x['Low'], x['Close']), axis = 1)
+    else:
+        hist = np.nan
+
+    return hist, [], []
     
 def create_train_data(ticker, start_date = None, end_date = None, n = 10):
     # get stock data
@@ -78,6 +116,7 @@ def create_train_data(ticker, start_date = None, end_date = None, n = 10):
     data = n_day_regression(5, data, list(idxs_with_mins) + list(idxs_with_maxs))
     data = n_day_regression(10, data, list(idxs_with_mins) + list(idxs_with_maxs))
     data = n_day_regression(20, data, list(idxs_with_mins) + list(idxs_with_maxs))
+    data = n_day_regression(50, data, list(idxs_with_mins) + list(idxs_with_maxs))
 
     _data_ = data[(data['loc_min'] > 0) | (data['loc_max'] > 0)].reset_index(drop = True)
 
@@ -93,6 +132,22 @@ def create_train_data(ticker, start_date = None, end_date = None, n = 10):
 def create_test_data_lr(ticker, start_date = None, end_date = None, n = 10):
     #get data to a dataframe
     data, _, _ = get_stock_price_history(ticker, start_date, end_date, n)
+    idxs = np.arange(0, len(data))
+
+    #create regressions for 3, 5, 10 and 20 days
+    data = n_day_regression(3, data, idxs)
+    data = n_day_regression(5, data, idxs)
+    data = n_day_regression(10, data, idxs)
+    data = n_day_regression(20, data, idxs)
+
+    cols = ['Close', 'Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg']
+    data = data[cols]
+
+    return data.dropna(axis = 0)
+
+def create_test_data_lr_realtime(ticker, n = 10):
+    #get data to a dataframe
+    data, _, _ = get_stock_price_realtime(ticker)
     idxs = np.arange(0, len(data))
 
     #create regressions for 3, 5, 10 and 20 days

@@ -1,7 +1,7 @@
 import numpy as np
 import pickle
 from sklearn.linear_model import LogisticRegression
-from stock_utils.stock_utils import timestamp, create_train_data, get_stock_price_history, create_test_data_lr, get_stock_price
+from stock_utils.stock_utils import timestamp, create_train_data, get_stock_price_history, create_test_data_lr, create_test_data_lr_realtime, get_stock_price
 from datetime import timedelta
 import time
 import os
@@ -31,13 +31,16 @@ def _threshold(probs, threshold):
 
     return np.array(prob_thresholded)
 
-def LR_v1_predic(stock, start_date, end_date, threshold = 0.98):
+def LR_v1_predic(stock, start_date, end_date, threshold = 0.98, data_type='realtime'):
     #create model and scaler instances
     scaler = load_scaler('v2')
     lr = load_LR('v2')
 
     #create input
-    data = create_test_data_lr(stock, start_date, end_date)
+    if(data_type == 'realtime'):
+        data = create_test_data_lr_realtime(stock)
+    else:
+        data = create_test_data_lr(stock, start_date, end_date)
 
     #get close price of final date
     close_price = data['Close'].values[-1]
@@ -51,7 +54,7 @@ def LR_v1_predic(stock, start_date, end_date, threshold = 0.98):
     prediction = lr._predict_proba_lr(input_data_scaled)
     prediction_thresholded = _threshold(prediction, threshold)
 
-    return prediction[:, 0], prediction_thresholded[0], close_price
+    return prediction[:, 0], prediction_thresholded[0], close_price, 'IGNORED' if data['marketCap'] < 1e10 else ''
 
 def LR_v1_sell(stock, buy_date, buy_price, todays_date, sell_perc = 0.1, hold_till = 3, stop_perc = 0.05):
     current_price = get_stock_price(stock, todays_date)
