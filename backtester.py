@@ -68,7 +68,7 @@ class backtester(simulator):
                     self.buy(recommanded_stock, recommanded_price, self.day) # buy stock
                     self.status = 'sell' #change the status to sell
                 else:
-                    print('No recommandations')
+                    print(f'No recommandations on {self.start_date + timedelta(self.day)}')
                     pass
             else:
                 #if the status is sell, get stock price on the day
