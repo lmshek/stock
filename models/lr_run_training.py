@@ -27,16 +27,22 @@ import seaborn as sns
 
 class LR_training:
 
-    def __init__(self, model_veresion, threshold = 0.75, start_date = None, end_date = None, n = 10):
+    def __init__(self, model_version, threshold = 0.75, start_date = None, end_date = None, n = 10):
 
-        self.model_version = model_veresion
+        self.model_version = model_version
         self.threshold = threshold
 
         if start_date:
             self.start_date = start_date
         if end_date:
             self.end_date = end_date
-        
+
+        print('========== Training Data Parameters ============')
+        print(f'Start Date: {self.start_date}')
+        print(f'End Date: {self.end_date}')
+        print(f'Threshold: {self.threshold}')
+        print(f'N: {n}')
+
         # get stock tickers symobols
         current_dir = os.getcwd()
         hsi_tech = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_tech.csv'))['tickers'].tolist()
@@ -136,13 +142,29 @@ class LR_training:
         plt.savefig(f'{cm_path}/cm_thresholded_{self.model_version}.jpg')
         print(f'Figures saved in {cm_path}')
 
-
 if __name__ == "__main__":
-    # Train 4 years data
-    end_date = datetime.now() - timedelta(days = 365)
-    start_date = datetime.now() - timedelta(days=5*365)
+    # Setup parameters
+    try:
+        threshold = sys.argv[1]
+    except:
+        threshold = 0.95
+
+    try:
+        start_date = datetime.strptime(sys.argv[2], "%Y-%m-%d")
+    except:
+        start_date = datetime.now() - timedelta(days=4*365)
+
+    try:
+        end_date = datetime.strptime(sys.argv[3], "%Y-%m-%d")
+    except:
+        end_date = datetime.now() - timedelta(days = 1) 
+
+    try: 
+        n = int(sys.argv[4])
+    except:
+        n = 21
 
     # Start training
-    run_lr = LR_training('v2', threshold=0.75, start_date= start_date, end_date=end_date, n=10)
+    run_lr = LR_training('v2', threshold=0.95, start_date= start_date, end_date=end_date, n=n)
 
 

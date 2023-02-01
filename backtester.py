@@ -16,6 +16,7 @@ import pickle
 from tqdm import tqdm
 import pandas_datareader.data as web
 from stock_utils.bcolors import bcolors
+import sys
 
 class backtester(simulator):
 
@@ -35,6 +36,15 @@ class backtester(simulator):
         self.sell_perc = sell_perc
         self.stop_perc = stop_perc
         self.no_of_splits_available = no_of_splits
+
+        print('========== Back Test Data Parameters ============')
+        print(f'Start Date: {self.start_date}')
+        print(f'End Date: {self.end_date}')
+        print(f'Threshold: {self.threshold}')
+        print(f'Hold Till: {self.hold_till}')
+        print(f'Sell Perc: {self.sell_perc}')
+        print(f'Stop Perc: {self.stop_perc}')
+        print(f'No of Splits: {self.no_of_splits_available}')
 
         #current directory
         current_dir = os.getcwd()
@@ -188,16 +198,19 @@ if __name__ == "__main__":
     #stocks = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_all.csv'))['tickers'].tolist()
     
 
-    end_date = datetime.now() - timedelta(days = 1)
-    start_date = datetime.now() - timedelta(days = 365)
+    try:
+        start_date = datetime.strptime(sys.argv[1], "%Y-%m-%d")
+    except:
+        start_date = datetime.now() - timedelta(days=365)
+
+    try:
+        end_date = datetime.strptime(sys.argv[2], "%Y-%m-%d")
+    except:
+        end_date = datetime.now() - timedelta(days = 1) 
 
     """
     Back Test different parameters
     """  
-
-    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = end_date, \
-        threshold = 0.5, sell_perc= 0.03, hold_till= 3, stop_perc= 0.03, no_of_splits=3).backtest()      
-
     backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = end_date, \
         threshold = 0.95, sell_perc= 0.1, hold_till= 21, stop_perc= 0.05, no_of_splits=3).backtest()
     
@@ -206,6 +219,9 @@ if __name__ == "__main__":
 
     backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = end_date, \
         threshold = 0.75, sell_perc= 0.04, hold_till= 5, stop_perc= 0.04, no_of_splits=3).backtest()
+    
+    backtester(stocks, LR_v1_predict, start_date = start_date, end_date = end_date, \
+        threshold = 0.5, sell_perc= 0.03, hold_till= 3, stop_perc= 0.03, no_of_splits=3).backtest()      
 
     
 
