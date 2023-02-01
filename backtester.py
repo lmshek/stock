@@ -15,6 +15,7 @@ import os
 import pickle
 from tqdm import tqdm
 import pandas_datareader.data as web
+from stock_utils.bcolors import bcolors
 
 class backtester(simulator):
 
@@ -65,6 +66,7 @@ class backtester(simulator):
                 if recommended_action == "SELL":
                     self.sell(s, current_price, self.buy_orders[s][1], self.day, self.buy_orders[s][0])
                     self.no_of_splits_available += 1
+                    print(f'{bcolors.HEADER}No. of splits available: {self.no_of_splits_available}{bcolors.ENDC}')
 
             #daily scanner dict
             self.daily_scanner = {}
@@ -81,6 +83,7 @@ class backtester(simulator):
                         self.buy(recommanded_stock, recommanded_price, self.day, self.no_of_splits_available, recommanded_probability) # buy stock
                         self.no_of_splits_available -= 1
                         no_of_stock_buy_today += 1
+                        print(f'{bcolors.HEADER}No. of splits available: {self.no_of_splits_available}{bcolors.ENDC}')
                     else:                    
                         print(f'Missed {len(self.daily_scanner.keys()) - no_of_stock_buy_today} other potential stocks on {self.day.strftime("%Y-%m-%d")}')
                         break
@@ -93,6 +96,7 @@ class backtester(simulator):
             d += 1
             print('\n')
             pbar.update(1)
+            print('\n')
             
         pbar.close()
         #sell the final stock and print final capital also print stock history
@@ -107,7 +111,7 @@ class backtester(simulator):
         (default is 30)
         """
         #get start and end dates
-        end = self.day - timedelta(days = 1)
+        end = self.day
         start = self.day - timedelta(days = back_to)
         prediction, prediction_thresholded, close_price = self.model(stock, start, end, self.threshold, data_type="history")
         return prediction[0], prediction_thresholded, close_price
@@ -189,7 +193,10 @@ if __name__ == "__main__":
 
     """
     Back Test different parameters
-    """        
+    """  
+
+    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = end_date, \
+        threshold = 0.5, sell_perc= 0.03, hold_till= 3, stop_perc= 0.03, no_of_splits=3).backtest()      
 
     backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = end_date, \
         threshold = 0.95, sell_perc= 0.1, hold_till= 21, stop_perc= 0.05, no_of_splits=3).backtest()
@@ -200,8 +207,7 @@ if __name__ == "__main__":
     backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = end_date, \
         threshold = 0.75, sell_perc= 0.04, hold_till= 5, stop_perc= 0.04, no_of_splits=3).backtest()
 
-    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = end_date, \
-        threshold = 0.5, sell_perc= 0.03, hold_till= 3, stop_perc= 0.03, no_of_splits=3).backtest()
+    
 
     
 
