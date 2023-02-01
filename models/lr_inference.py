@@ -46,7 +46,7 @@ def LR_v1_predict(stock, start_date, end_date, threshold = 0.98, data_type='real
     close_price = data['Close'].values[-1]
 
     #get input data to model
-    input_data = data[['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg']]
+    input_data = data[['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg']]
     input_data = input_data.to_numpy()[-1].reshape(1, -1)
 
     #scale input data

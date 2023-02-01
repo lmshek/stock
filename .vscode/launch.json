@@ -29,11 +29,11 @@
             "justMyCode": true
         },
         {
-            "name": "Train Model from 1 year ago to 5 year ago",
+            "name": "Train Model from 1 year ago to 10 year ago",
             "type": "python",
             "request": "launch",
             "program": "models/lr_run_training.py",
-            "args": ["0.95", "2018-02-01", "2022-02-01", "10"],
+            "args": ["0.95", "2012-02-01", "2022-02-01", "21"],
             "console": "integratedTerminal",
             "justMyCode": true
         }
