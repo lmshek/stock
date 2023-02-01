@@ -29,12 +29,11 @@ class backtester(simulator):
         self.start_date = start_date
         self.day = start_date
         self.end_date = end_date
-        self.status = 'buy' # the status says if the backtester is in nuy mode or sell mode
         self.threshold = threshold        
         self.hold_till = hold_till
         self.sell_perc = sell_perc
         self.stop_perc = stop_perc
-        self.no_of_splits = no_of_splits
+        self.no_of_splits_available = no_of_splits
 
         #current directory
         current_dir = os.getcwd()
@@ -58,34 +57,43 @@ class backtester(simulator):
 
         while self.day <= self.end_date:
 
+            #check if any stock should sell, or any stock hit the maturity date 
+            stocks = [key for key in self.buy_orders.keys()]
+            for s in stocks:
+                recommended_action, current_price = LR_v1_sell(s, self.buy_orders[s][3], self.buy_orders[s][0], self.day, \
+                    self.sell_perc, self.hold_till, self.stop_perc)
+                if recommended_action == "SELL":
+                    self.sell(s, current_price, self.buy_orders[s][1], self.day, self.buy_orders[s][0])
+                    self.no_of_splits_available += 1
+
             #daily scanner dict
             self.daily_scanner = {}
-            if self.status == 'buy':
-                #scan stocks for the day
-                self.scanner()
-                if list(self.daily_scanner.keys()) != []:
-                    recommanded_stock = list(self.daily_scanner.keys())[0]
-                    recommanded_price = list(self.daily_scanner.values())[0][2]
-                    self.buy(recommanded_stock, recommanded_price, self.day, self.no_of_splits) # buy stock
-                    self.status = 'sell' #change the status to sell
-                else:
-                    print(f'No recommandations on {self.day.strftime("%Y-%m-%d")}')
-                    pass
+            #scan potential stocks for the day
+            self.scanner()            
+            #check if any recommended stocks to buy today
+            if list(self.daily_scanner.keys()) != []:
+                no_of_stock_buy_today = 0
+                for daily_recommanded_stock, recommand_params in self.daily_scanner.items():
+                    recommanded_stock = daily_recommanded_stock
+                    recommanded_probability = recommand_params[0]
+                    recommanded_price = recommand_params[2]
+                    if self.no_of_splits_available > 0:
+                        self.buy(recommanded_stock, recommanded_price, self.day, self.no_of_splits_available, recommanded_probability) # buy stock
+                        self.no_of_splits_available -= 1
+                        no_of_stock_buy_today += 1
+                    else:                    
+                        print(f'Missed {len(self.daily_scanner.keys()) - no_of_stock_buy_today} other potential stocks on {self.day.strftime("%Y-%m-%d")}')
+                        break
             else:
-                #if the status is sell, get stock price on the day
-                stocks = [key for key in self.buy_orders.keys()]
-                for s in stocks:
-                    recommended_action, current_price = LR_v1_sell(s, self.buy_orders[s][3], self.buy_orders[s][0], self.day, \
-                        self.sell_perc, self.hold_till, self.stop_perc)
-                    if recommended_action == "SELL":
-                        self.sell(s, current_price, self.buy_orders[s][1], self.day)
-                        self.status = 'buy'
-            
+                print(f'No recommandations on {self.day.strftime("%Y-%m-%d")}')
+                pass
+
             #go to next day
             self.day += delta
             d += 1
-            pbar.update(1)
             print('\n')
+            pbar.update(1)
+            
         pbar.close()
         #sell the final stock and print final capital also print stock history
         self.print_bag()
@@ -176,23 +184,26 @@ if __name__ == "__main__":
     #stocks = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_all.csv'))['tickers'].tolist()
     
 
-    endnd_date = datetime.now() - timedelta(days = 1)
+    end_date = datetime.now() - timedelta(days = 1)
     start_date = datetime.now() - timedelta(days = 365)
 
     """
     Back Test different parameters
-    """    
-    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = endnd_date, \
+    """        
+
+    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = end_date, \
         threshold = 0.95, sell_perc= 0.1, hold_till= 21, stop_perc= 0.05, no_of_splits=3).backtest()
     
-    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = endnd_date, \
+    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = end_date, \
         threshold = 0.75, sell_perc= 0.08, hold_till= 10, stop_perc= 0.08, no_of_splits=3).backtest()
 
-    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = endnd_date, \
+    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = end_date, \
         threshold = 0.75, sell_perc= 0.04, hold_till= 5, stop_perc= 0.04, no_of_splits=3).backtest()
 
-    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = endnd_date, \
+    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = end_date, \
         threshold = 0.5, sell_perc= 0.03, hold_till= 3, stop_perc= 0.03, no_of_splits=3).backtest()
+
+    
 
 
     

@@ -2,6 +2,17 @@ import numpy as np
 import math
 import pandas as pd
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 class simulator:
 
     def __init__(self, capital):
@@ -15,7 +26,7 @@ class simulator:
         cols = ['stock', 'buy_price', 'n_shares', 'sell_price', 'net_gain', 'buy_date', 'sell_date']
         self.history_df = pd.DataFrame(columns = cols)
 
-    def buy(self, stock, buy_price, buy_date, no_of_splits):
+    def buy(self, stock, buy_price, buy_date, no_of_splits, probability):
         """
         function takes buy price and the number of shares and buy the stock
         """
@@ -26,9 +37,9 @@ class simulator:
         self.buy_orders[stock] = [buy_price, n_shares, buy_price * n_shares, buy_date]
 
 
-        print(f'Bought {stock} for {buy_price} on the {buy_date}. Account Balance: {self.capital} \n')
+        print(f'{bcolors.OKCYAN}Bought {stock} for {buy_price} with probabilities {round(probability * 100, 2)}% on the {buy_date.strftime("%Y-%m-%d")}. Account Balance: {self.capital}{bcolors.ENDC}')
 
-    def sell(self, stock, sell_price, n_shares_sell, sell_date):
+    def sell(self, stock, sell_price, n_shares_sell, sell_date, buy_price):
         """
         function to sell stock given the stock name and number of shares
         """
@@ -45,7 +56,12 @@ class simulator:
             self.buy_orders[stock][1] = n_shares
             self.buy_orders[stock][2] = buy_price * n_shares
         
-        print(f'Sold {stock} for {sell_price} on {sell_date}. Account Balance: {self.capital} \n')
+        profit = sell_price - buy_price 
+               
+        if profit > 0:
+            print(f'{bcolors.OKGREEN}Sold {stock} for {sell_price} (Make profit {round(profit / buy_price * 100, 2)}%) on {sell_date.strftime("%Y-%m-%d")}. Account Balance: {self.capital}{bcolors.ENDC}')
+        else:
+            print(f'{bcolors.FAIL}Sold {stock} for {sell_price} (Lose money {round(profit / buy_price * 100, 2)}%) on {sell_date.strftime("%Y-%m-%d")}. Account Balance: {self.capital}{bcolors.ENDC}')
 
     def buy_percentage(self, buy_price, buy_perc = 1):
         """
