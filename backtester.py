@@ -115,7 +115,7 @@ class backtester(simulator):
         self.save_results()
         return
     
-    def get_stock_data(self, stock, back_to = 50):
+    def get_stock_data(self, stock, back_to = 100):
         """
         this function queries to yf and get data of a particular stock on a given day back to certain amount of days
         (default is 30)

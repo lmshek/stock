@@ -134,6 +134,7 @@ def create_train_data(ticker, start_date = None, end_date = None, n = 10):
     data = n_day_regression(10, data, list(idxs_with_mins) + list(idxs_with_maxs))
     data = n_day_regression(20, data, list(idxs_with_mins) + list(idxs_with_maxs))
     data = n_day_regression(50, data, list(idxs_with_mins) + list(idxs_with_maxs))
+    data = n_day_regression(100, data, list(idxs_with_mins) + list(idxs_with_maxs))
 
     _data_ = data[(data['loc_min'] > 0) | (data['loc_max'] > 0)].reset_index(drop = True)
 
@@ -141,7 +142,7 @@ def create_train_data(ticker, start_date = None, end_date = None, n = 10):
     _data_['target'] = [1 if x > 0 else 0 for x in _data_['loc_max']]
 
     #columns of interest
-    cols_of_interest = ['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', 'target']
+    cols_of_interest = ['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg', 'target']
     _data_ = _data_[cols_of_interest]
 
     return _data_.dropna(axis = 0)
@@ -157,8 +158,9 @@ def create_test_data_lr(ticker, start_date = None, end_date = None, n = 10):
     data = n_day_regression(10, data, idxs)
     data = n_day_regression(20, data, idxs)
     data = n_day_regression(50, data, idxs)
+    data = n_day_regression(100, data, idxs)
 
-    cols = ['Close', 'Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg']
+    cols = ['Close', 'Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg']
     data = data[cols]
 
     return data.dropna(axis = 0)
@@ -174,8 +176,9 @@ def create_realtime_data_lr(ticker, n = 10):
     data = n_day_regression(10, data, idxs)
     data = n_day_regression(20, data, idxs)
     data = n_day_regression(50, data, idxs)
+    data = n_day_regression(100, data, idxs)
 
-    cols = ['Close', 'Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg']
+    cols = ['Close', 'Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg']
     data = data[cols]
 
     return data.dropna(axis = 0)
@@ -192,12 +195,13 @@ def predict_trend(ticker, _model_, start_date = None, end_date = None, n = 10):
     data = n_day_regression(10, data, idxs)
     data = n_day_regression(20, data, idxs)
     data = n_day_regression(50, data, idxs)
+    data = n_day_regression(100, data, idxs)
 
     #create a column for predicted value
     data['pred'] = np.nan
 
     #get data
-    cols = ['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg']
+    cols = ['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg']
     x = data[cols]
 
     #scale the x data
