@@ -18,7 +18,7 @@ import pandas_datareader.data as web
 
 class backtester(simulator):
 
-    def __init__(self, stocks_list, model, capital, start_date, end_date, threshold = 0.99, sell_perc = 0.08, hold_till = 10, stop_perc = 0.004):
+    def __init__(self, stocks_list, model, capital, start_date, end_date, threshold = 0.99, sell_perc = 0.08, hold_till = 10, stop_perc = 0.004, no_of_splits = 5):
 
         super().__init__(capital)
 
@@ -34,6 +34,7 @@ class backtester(simulator):
         self.hold_till = hold_till
         self.sell_perc = sell_perc
         self.stop_perc = stop_perc
+        self.no_of_splits = no_of_splits
 
         #current directory
         current_dir = os.getcwd()
@@ -65,7 +66,7 @@ class backtester(simulator):
                 if list(self.daily_scanner.keys()) != []:
                     recommanded_stock = list(self.daily_scanner.keys())[0]
                     recommanded_price = list(self.daily_scanner.values())[0][2]
-                    self.buy(recommanded_stock, recommanded_price, self.day) # buy stock
+                    self.buy(recommanded_stock, recommanded_price, self.day, self.no_of_splits) # buy stock
                     self.status = 'sell' #change the status to sell
                 else:
                     print(f'No recommandations on {self.start_date + timedelta(self.day)}')
@@ -181,17 +182,17 @@ if __name__ == "__main__":
     """
     Back Test different parameters
     """    
-    backtester(stocks, LR_v1_predict, 50000, start_date = start_date, end_date = endnd_date, \
-        threshold = 0.95, sell_perc= 0.1, hold_till= 21, stop_perc= 0.05).backtest()
+    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = endnd_date, \
+        threshold = 0.95, sell_perc= 0.1, hold_till= 21, stop_perc= 0.05, no_of_splits=3).backtest()
     
-    backtester(stocks, LR_v1_predict, 50000, start_date = start_date, end_date = endnd_date, \
-        threshold = 0.75, sell_perc= 0.08, hold_till= 10, stop_perc= 0.08).backtest()
+    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = endnd_date, \
+        threshold = 0.75, sell_perc= 0.08, hold_till= 10, stop_perc= 0.08, no_of_splits=3).backtest()
 
-    backtester(stocks, LR_v1_predict, 50000, start_date = start_date, end_date = endnd_date, \
-        threshold = 0.75, sell_perc= 0.04, hold_till= 5, stop_perc= 0.04).backtest()
+    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = endnd_date, \
+        threshold = 0.75, sell_perc= 0.04, hold_till= 5, stop_perc= 0.04, no_of_splits=3).backtest()
 
-    backtester(stocks, LR_v1_predict, 50000, start_date = start_date, end_date = endnd_date, \
-        threshold = 0.5, sell_perc= 0.03, hold_till= 3, stop_perc= 0.03).backtest()
+    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = endnd_date, \
+        threshold = 0.5, sell_perc= 0.03, hold_till= 3, stop_perc= 0.03, no_of_splits=3).backtest()
 
 
     

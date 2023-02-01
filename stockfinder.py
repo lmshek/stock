@@ -1,6 +1,6 @@
 import pandas_datareader as web
-import datetime
-import time
+from datetime import date
+import holidays
 import numpy as np
 import pandas as pd
 from models.lr_inference import LR_v1_sell, LR_v1_predict
@@ -14,10 +14,13 @@ from telegram.telegram import telegram
 
 class stockfinder:
 
-    def __init__(self, stocks_list, model, threshold = 0.75):
+    def __init__(self, stocks_list, model, threshold = 0.75, sell_perc = 0.08, hold_till = 5, stop_perc = 0.08):
         self.stocks = stocks_list
         self.model = model
         self.threshold = threshold
+        self.sell_perc = sell_perc
+        self.hold_till = hold_till
+        self.stop_perc = stop_perc
         self.good_stocks = []
 
     def scan(self):
@@ -37,6 +40,15 @@ class stockfinder:
 
 
 if __name__ == "__main__":
+
+    #Check if today is holiday
+    hk_holidays = holidays.HK()
+    today = date.today()
+    if(today in hk_holidays):
+        exit()
+    
+
+
     current_dir = os.getcwd()
     
     hsi_tech = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_tech.csv'))['tickers'].tolist()

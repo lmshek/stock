@@ -15,13 +15,13 @@ class simulator:
         cols = ['stock', 'buy_price', 'n_shares', 'sell_price', 'net_gain', 'buy_date', 'sell_date']
         self.history_df = pd.DataFrame(columns = cols)
 
-    def buy(self, stock, buy_price, buy_date):
+    def buy(self, stock, buy_price, buy_date, no_of_splits):
         """
         function takes buy price and the number of shares and buy the stock
         """
 
         #calculate the procedure
-        n_shares = self.buy_percentage(buy_price)
+        n_shares = self.buy_percentage(buy_price, 1/no_of_splits)
         self.capital = self.capital - buy_price * n_shares
         self.buy_orders[stock] = [buy_price, n_shares, buy_price * n_shares, buy_date]
 
