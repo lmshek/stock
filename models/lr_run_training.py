@@ -53,7 +53,7 @@ class LR_training:
         self.stocks = list(np.unique(stocks))
 
         #main dataframe
-        self.main_df = pd.DataFrame(columns = ['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', 'target'])
+        self.main_df = pd.DataFrame(columns = ['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', 'target'])
 
         # init models
         self.scalar = MinMaxScaler()
