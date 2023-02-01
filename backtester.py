@@ -2,7 +2,7 @@ import numpy as np
 from stock_utils.simulator import simulator
 from stock_utils.stock_utils import get_stock_price
 from models import lr_inference
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import pandas as pd
 import yfinance as yf
 from models.lr_inference import LR_v1_sell, LR_v1_predict
@@ -17,6 +17,7 @@ from tqdm import tqdm
 import pandas_datareader.data as web
 from stock_utils.bcolors import bcolors
 import sys
+import holidays
 
 class backtester(simulator):
 
@@ -60,6 +61,7 @@ class backtester(simulator):
         Start backtesting
         """
         delta = timedelta(days = 1)
+        hk_holidays = holidays.HK()
 
         #progress bar to track prgrress
         total_days = (self.end_date - self.start_date).days
@@ -67,39 +69,42 @@ class backtester(simulator):
         pbar = tqdm(desc = 'Progress', total = total_days)
 
         while self.day <= self.end_date:
+            
+            # Trade when today is not holiday and weekends
+            if not(self.day in hk_holidays or hk_holidays._is_weekend(self.day)):                
 
-            #check if any stock should sell, or any stock hit the maturity date 
-            stocks = [key for key in self.buy_orders.keys()]
-            for s in stocks:
-                recommended_action, current_price = LR_v1_sell(s, self.buy_orders[s][3], self.buy_orders[s][0], self.day, \
-                    self.sell_perc, self.hold_till, self.stop_perc)
-                if recommended_action == "SELL":
-                    self.sell(s, current_price, self.buy_orders[s][1], self.day, self.buy_orders[s][0])
-                    self.no_of_splits_available += 1
-                    print(f'{bcolors.HEADER}No. of splits available: {self.no_of_splits_available}{bcolors.ENDC}')
-
-            #daily scanner dict
-            self.daily_scanner = {}
-            #scan potential stocks for the day
-            self.scanner()            
-            #check if any recommended stocks to buy today
-            if list(self.daily_scanner.keys()) != []:
-                no_of_stock_buy_today = 0
-                for daily_recommanded_stock, recommand_params in self.daily_scanner.items():
-                    recommanded_stock = daily_recommanded_stock
-                    recommanded_probability = recommand_params[0]
-                    recommanded_price = recommand_params[2]
-                    if self.no_of_splits_available > 0:
-                        self.buy(recommanded_stock, recommanded_price, self.day, self.no_of_splits_available, recommanded_probability) # buy stock
-                        self.no_of_splits_available -= 1
-                        no_of_stock_buy_today += 1
+                #check if any stock should sell, or any stock hit the maturity date 
+                stocks = [key for key in self.buy_orders.keys()]
+                for s in stocks:
+                    recommended_action, current_price = LR_v1_sell(s, self.buy_orders[s][3], self.buy_orders[s][0], self.day, \
+                        self.sell_perc, self.hold_till, self.stop_perc)
+                    if recommended_action == "SELL":
+                        self.sell(s, current_price, self.buy_orders[s][1], self.day, self.buy_orders[s][0])
+                        self.no_of_splits_available += 1
                         print(f'{bcolors.HEADER}No. of splits available: {self.no_of_splits_available}{bcolors.ENDC}')
-                    else:                    
-                        print(f'Missed {len(self.daily_scanner.keys()) - no_of_stock_buy_today} other potential stocks on {self.day.strftime("%Y-%m-%d")}')
-                        break
-            else:
-                print(f'No recommandations on {self.day.strftime("%Y-%m-%d")}')
-                pass
+
+                #daily scanner dict
+                self.daily_scanner = {}
+                #scan potential stocks for the day
+                self.scanner()            
+                #check if any recommended stocks to buy today
+                if list(self.daily_scanner.keys()) != []:
+                    no_of_stock_buy_today = 0
+                    for daily_recommanded_stock, recommand_params in self.daily_scanner.items():
+                        recommanded_stock = daily_recommanded_stock
+                        recommanded_probability = recommand_params[0]
+                        recommanded_price = recommand_params[2]
+                        if self.no_of_splits_available > 0 and no_of_stock_buy_today == 0: # we only buy 1 stock in 1 day
+                            self.buy(recommanded_stock, recommanded_price, self.day, self.no_of_splits_available, recommanded_probability) # buy stock
+                            self.no_of_splits_available -= 1
+                            no_of_stock_buy_today += 1
+                            print(f'{bcolors.HEADER}No. of splits available: {self.no_of_splits_available}{bcolors.ENDC}')
+                        else:                    
+                            print(f'Missed {len(self.daily_scanner.keys()) - no_of_stock_buy_today} other potential stocks on {self.day.strftime("%Y-%m-%d")}')
+                            break
+                else:
+                    print(f'No recommandations on {self.day.strftime("%Y-%m-%d")}')
+                    pass
 
             #go to next day
             self.day += delta
