@@ -1,5 +1,5 @@
 import pandas_datareader as web
-from datetime import date
+from datetime import date, datetime
 import holidays
 import numpy as np
 import pandas as pd
@@ -28,28 +28,33 @@ class stockfinder:
         model_recommended_stocks = {}
         for stock in self.stocks:
             try:
-                prediction, prediction_thresholded, current_price , is_ignored = self.model(stock, '', '', self.threshold, data_type="realtime")
+                prediction, prediction_thresholded, current_price = self.model(stock, '', '', self.threshold, data_type="realtime")
 
-                if not is_ignored and prediction_thresholded < 1:
+                if prediction_thresholded < 1:
                     model_recommended_stocks[stock] = (prediction, prediction_thresholded, current_price)
             except:
                 pass   
         def take_first(elem):
             return elem[1]  
-        # Get 3 most good probabilities stocks
-        good_stocks = OrderedDict(sorted(model_recommended_stocks.items(), key = take_first, reverse = True))[0:(self.no_of_recommendations - 1)]
+        
+        good_stocks = OrderedDict(sorted(model_recommended_stocks.items(), key = take_first, reverse = True))
+  
         
         # Push the buying signal to Telegram channel
-        for key, value in good_stocks.items():
-            stock = key
-            current_price = value[2]
-            threshold = self.threshold
-            sell_perc = self.sell_perc
-            hold_till = self.hold_till
-            stop_perc = self.stop_perc
-            prediction_probability = value[0]
+        # Get 3 most good probabilities stocks
+        if len(good_stocks) == 0:
+            print(f'No recoomendation on {datetime.now()}')
+        else:    
+            for key in list(good_stocks)[0:self.no_of_recommendations]:
+                stock = key
+                current_price = good_stocks[key][2]
+                sell_perc = self.sell_perc
+                hold_till = self.hold_till
+                stop_perc = self.stop_perc
+                prediction_probability = good_stocks[key][0][0]
 
-            telegram.send_formatted_message(stock=stock, prediction_probability=prediction_probability, current_price=current_price, threshold=threshold, sell_perc=sell_perc, hold_till=hold_till, stop_perc=stop_perc)
+                t = telegram()
+                t.send_formatted_message(stock=stock, prediction_probability=prediction_probability, current_price=current_price, sell_perc=sell_perc, hold_till=hold_till, stop_perc=stop_perc)
 
 
 
@@ -62,8 +67,6 @@ if __name__ == "__main__":
     today = date.today()
     if(today in hk_holidays):
         exit()
-    
-
 
     current_dir = os.getcwd()    
     hsi_tech = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_tech.csv'))['tickers'].tolist()

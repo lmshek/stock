@@ -120,7 +120,7 @@ def get_stock_price_realtime(ticker, start_date = None, end_date = None, n = 10)
         idx_with_mins = np.where(hist['loc_min'] > 0)[0]
         idx_with_maxs = np.where(hist['loc_max'] > 0)[0]
     else:
-        hist = np.nan
+        raise Exception("Market Cap is not big enough")
 
     return hist, idx_with_mins, idx_with_maxs
     

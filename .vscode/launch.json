@@ -5,10 +5,26 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "Stock Finder",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            "program": "stockfinder.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Back Test",
+            "type": "python",
+            "request": "launch",
+            "program": "backtester.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Train Model",
+            "type": "python",
+            "request": "launch",
+            "program": "models/lr_run_training.py",
             "console": "integratedTerminal",
             "justMyCode": true
         }
