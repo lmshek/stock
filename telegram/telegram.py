@@ -12,7 +12,7 @@ class telegram:
 
         try:
             response = requests.post(api_url, json={'chat_id': chat_id, 'text': message, 'parse_mode': 'HTML'})
-            k = 10
+            
         except Exception as e:
             print(e)
 
