@@ -5,7 +5,7 @@ from models import lr_inference
 from datetime import datetime, timedelta, date
 import pandas as pd
 import yfinance as yf
-from models.lr_inference import LR_v1_sell, LR_v1_predict
+from models.lr_inference import LR_sell, LR_predict
 from data_science.stats import create_stats
 from data_science.create_figures import create_figures 
 import warnings
@@ -21,7 +21,7 @@ import holidays
 
 class backtester(simulator):
 
-    def __init__(self, stocks_list, model, capital, start_date, end_date, threshold = 0.99, sell_perc = 0.08, hold_till = 10, stop_perc = 0.004, no_of_splits = 5):
+    def __init__(self, stocks_list, model, model_version, capital, start_date, end_date, threshold = 0.99, sell_perc = 0.08, hold_till = 10, stop_perc = 0.004, no_of_splits = 5):
 
         super().__init__(capital)
 
@@ -29,6 +29,7 @@ class backtester(simulator):
 
         self.stocks = stocks_list
         self.model = model
+        self.model_version = model_version
         self.start_date = start_date
         self.day = start_date
         self.end_date = end_date
@@ -39,8 +40,10 @@ class backtester(simulator):
         self.no_of_splits_available = no_of_splits
 
         print('========== Back Test Data Parameters ============')
-        print(f'Start Date: {self.start_date}')
-        print(f'End Date: {self.end_date}')
+        print(f'No. of stocks: {len(self.stocks)}')
+        print(f'Model: {self.model.__name__}_{self.model_version}')        
+        print(f'Start Date: {self.start_date.strftime("%Y-%m-%d")}')
+        print(f'End Date: {self.end_date.strftime("%Y-%m-%d")}')
         print(f'Threshold: {self.threshold}')
         print(f'Hold Till: {self.hold_till}')
         print(f'Sell Perc: {self.sell_perc}')
@@ -50,7 +53,7 @@ class backtester(simulator):
         #current directory
         current_dir = os.getcwd()
         results_dir = os.path.join(current_dir, 'results')
-        folder_name = f'{str(self.model.__name__)}_{self.threshold}_{self.hold_till}_{self.sell_perc}_{self.stop_perc}'
+        folder_name = f'{str(self.model.__name__)}_{self.model_version}_{self.threshold}_{self.hold_till}_{self.sell_perc}_{self.stop_perc}'
         self.folder_dir = os.path.join(results_dir, folder_name)
         if not os.path.exists(self.folder_dir):
             # create a new folder
@@ -76,35 +79,40 @@ class backtester(simulator):
                 #check if any stock should sell, or any stock hit the maturity date 
                 stocks = [key for key in self.buy_orders.keys()]
                 for s in stocks:
-                    recommended_action, current_price = LR_v1_sell(s, self.buy_orders[s][3], self.buy_orders[s][0], self.day, \
+                    recommended_action, current_price = LR_sell(s, self.buy_orders[s][3], self.buy_orders[s][0], self.day, \
                         self.sell_perc, self.hold_till, self.stop_perc)
                     if recommended_action == "SELL":
                         self.sell(s, current_price, self.buy_orders[s][1], self.day, self.buy_orders[s][0])
                         self.no_of_splits_available += 1
                         print(f'{bcolors.HEADER}No. of splits available: {self.no_of_splits_available}{bcolors.ENDC}')
+                
+                # if we still have avilable splits, then scan stocks to buy; Otherwise, go to next day
+                if self.no_of_splits_available > 0:                        
+                    #daily scanner dict
+                    self.daily_scanner = {}
+                    #scan potential stocks for the day
+                    self.scanner()            
+                    #check if any recommended stocks to buy today
+                    if list(self.daily_scanner.keys()) != []:
+                        no_of_stock_buy_today = 0
+                        for daily_recommanded_stock, recommand_params in self.daily_scanner.items():
+                            recommanded_stock = daily_recommanded_stock
+                            recommanded_probability = recommand_params[0]
+                            recommanded_price = recommand_params[2]
 
-                #daily scanner dict
-                self.daily_scanner = {}
-                #scan potential stocks for the day
-                self.scanner()            
-                #check if any recommended stocks to buy today
-                if list(self.daily_scanner.keys()) != []:
-                    no_of_stock_buy_today = 0
-                    for daily_recommanded_stock, recommand_params in self.daily_scanner.items():
-                        recommanded_stock = daily_recommanded_stock
-                        recommanded_probability = recommand_params[0]
-                        recommanded_price = recommand_params[2]
-                        if self.no_of_splits_available > 0 and no_of_stock_buy_today == 0: # we only buy 1 stock in 1 day
-                            self.buy(recommanded_stock, recommanded_price, self.day, self.no_of_splits_available, recommanded_probability) # buy stock
-                            self.no_of_splits_available -= 1
-                            no_of_stock_buy_today += 1
-                            print(f'{bcolors.HEADER}No. of splits available: {self.no_of_splits_available}{bcolors.ENDC}')
-                        else:                    
-                            print(f'Missed {len(self.daily_scanner.keys()) - no_of_stock_buy_today} other potential stocks on {self.day.strftime("%Y-%m-%d")}')
-                            break
-                else:
-                    print(f'No recommandations on {self.day.strftime("%Y-%m-%d")}')
-                    pass
+                            if recommanded_stock in self.buy_orders: # if we have already bought the stock, we will not buy it again.
+                                continue
+                            if no_of_stock_buy_today == 0: # we only buy 1 stock in 1 day
+                                self.buy(recommanded_stock, recommanded_price, self.day, self.no_of_splits_available, recommanded_probability) # buy stock
+                                self.no_of_splits_available -= 1
+                                no_of_stock_buy_today += 1
+                                print(f'{bcolors.HEADER}No. of splits available: {self.no_of_splits_available}{bcolors.ENDC}')
+                            else:                    
+                                print(f'Missed {len(self.daily_scanner.keys()) - no_of_stock_buy_today} other potential stocks on {self.day.strftime("%Y-%m-%d")}')
+                                break
+                    else:
+                        print(f'No recommandations on {self.day.strftime("%Y-%m-%d")}')
+                        pass
 
             #go to next day
             self.day += delta
@@ -114,13 +122,14 @@ class backtester(simulator):
             print('\n')
             
         pbar.close()
+        
         #sell the final stock and print final capital also print stock history
         self.print_bag()
         self.print_summary()
         self.save_results()
         return
     
-    def get_stock_data(self, stock, back_to = 100):
+    def get_stock_data(self, stock, back_to = 200):
         """
         this function queries to yf and get data of a particular stock on a given day back to certain amount of days
         (default is 30)
@@ -128,7 +137,7 @@ class backtester(simulator):
         #get start and end dates
         end = self.day
         start = self.day - timedelta(days = back_to)
-        prediction, prediction_thresholded, close_price = self.model(stock, start, end, self.threshold, data_type="history")
+        prediction, prediction_thresholded, close_price = self.model(self.model_version, stock, start, end, self.threshold, data_type="history", hold_till=self.hold_till)
         return prediction[0], prediction_thresholded, close_price
 
     def scanner(self):
@@ -189,17 +198,23 @@ class backtester(simulator):
         """
             Create Statistics and Figures
         """
-        create_stats('LR_v1_predict', self.threshold, self.hold_till, self.sell_perc, self.stop_perc)
-        create_figures('LR_v1_predict', self.threshold, self.hold_till, self.sell_perc, self.stop_perc)
+        create_stats(f'LR_predict_{self.model_version}', self.threshold, self.hold_till, self.sell_perc, self.stop_perc)
+        create_figures(f'LR_predict_{self.model_version}', self.threshold, self.hold_till, self.sell_perc, self.stop_perc)
 
 if __name__ == "__main__":
    
     # get stock tickers symobols
     current_dir = os.getcwd()
-    hsi_tech = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_tech.csv'))['tickers'].tolist()
-    hsi_main = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_main.csv'))['tickers'].tolist()
 
-    stocks = list(np.unique(hsi_tech + hsi_main))        
+    stocks = []
+    for stock_cat in ['hsi_integrated_large']: #'hsi_integrated_large', 'hsi_integrated_medium',
+        stocks = stocks + pd.read_csv(os.path.join(current_dir, f'stock_list/hsi/{stock_cat}.csv'))['tickers'].tolist()
+    stocks = list(np.unique(stocks)) 
+
+    #stocks = ["6699.HK"]
+    #hsi_tech = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_tech.csv'))['tickers'].tolist()
+    #hsi_main = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_main.csv'))['tickers'].tolist()
+    #stocks = list(np.unique(hsi_tech + hsi_main))        
     #stocks = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_all.csv'))['tickers'].tolist()
     
 
@@ -216,17 +231,17 @@ if __name__ == "__main__":
     """
     Back Test different parameters
     """  
-    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = end_date, \
-        threshold = 0.95, sell_perc= 0.1, hold_till= 21, stop_perc= 0.05, no_of_splits=3).backtest()
-    
-    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = end_date, \
-        threshold = 0.75, sell_perc= 0.08, hold_till= 10, stop_perc= 0.08, no_of_splits=3).backtest()
+    backtester(stocks, LR_predict, 'v2', 100000, start_date = start_date, end_date = end_date, \
+        threshold = 0.99, sell_perc= 0.1, hold_till= 10, stop_perc= 0.05, no_of_splits=3).backtest()
+    """
+    backtester(stocks, LR_predict, 'v2', 100000, start_date = start_date, end_date = end_date, \
+        threshold = 0.95, sell_perc= 0.08, hold_till= 10, stop_perc= 0.08, no_of_splits=3).backtest()
 
-    backtester(stocks, LR_v1_predict, 100000, start_date = start_date, end_date = end_date, \
-        threshold = 0.75, sell_perc= 0.04, hold_till= 5, stop_perc= 0.04, no_of_splits=3).backtest()
+    backtester(stocks, LR_predict, 'v2', 100000, start_date = start_date, end_date = end_date, \
+        threshold = 0.95, sell_perc= 0.05, hold_till= 10, stop_perc= 0.05, no_of_splits=3).backtest()
+    """
     
-    backtester(stocks, LR_v1_predict, start_date = start_date, end_date = end_date, \
-        threshold = 0.5, sell_perc= 0.03, hold_till= 3, stop_perc= 0.03, no_of_splits=3).backtest()      
+    
 
     
 

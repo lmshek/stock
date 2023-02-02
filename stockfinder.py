@@ -3,7 +3,7 @@ from datetime import date, datetime
 import holidays
 import numpy as np
 import pandas as pd
-from models.lr_inference import LR_v1_sell, LR_v1_predict
+from models.lr_inference import LR_sell, LR_predict
 import warnings
 from collections import OrderedDict
 warnings.filterwarnings("ignore")
@@ -14,9 +14,10 @@ from telegram.telegram import telegram
 
 class stockfinder:
 
-    def __init__(self, stocks_list, model, threshold = 0.75, sell_perc = 0.08, hold_till = 5, stop_perc = 0.08, no_of_recommendations = 3):
+    def __init__(self, stocks_list, model, model_version, threshold = 0.75, sell_perc = 0.08, hold_till = 5, stop_perc = 0.08, no_of_recommendations = 3):
         self.stocks = stocks_list
         self.model = model
+        self.model_version = model_version
         self.threshold = threshold
         self.sell_perc = sell_perc
         self.hold_till = hold_till
@@ -28,7 +29,7 @@ class stockfinder:
         model_recommended_stocks = {}
         for stock in self.stocks:
             try:
-                prediction, prediction_thresholded, current_price = self.model(stock, '', '', self.threshold, data_type="realtime")
+                prediction, prediction_thresholded, current_price = self.model(self.model_version, stock, '', '', self.threshold, data_type="realtime")
 
                 if prediction_thresholded < 1:
                     model_recommended_stocks[stock] = (prediction, prediction_thresholded, current_price)
@@ -74,6 +75,6 @@ if __name__ == "__main__":
     stocks = list(np.unique(hsi_tech + hsi_main))       
     #stocks = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_all.csv'))['tickers'].tolist()
 
-    stockfinder(stocks, LR_v1_predict, threshold = 0.5, sell_perc = 0.1, hold_till= 21, stop_perc = 0.05, no_of_recommendations = 3).scan()
+    stockfinder(stocks, LR_predict, 'v2', threshold = 0.95, sell_perc = 0.1, hold_till= 21, stop_perc = 0.05, no_of_recommendations = 3).scan()
 
 

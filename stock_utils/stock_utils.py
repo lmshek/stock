@@ -50,7 +50,7 @@ def get_stock_price(ticker, date):
     end_date = date
 
     stock = yf.Ticker(ticker)
-    hist = stock.history(start=start_date, end=end_date)
+    hist = stock.history(start=start_date, end=end_date + timedelta(days=1))
 
     return hist['Close'].values[-1]
 
@@ -58,7 +58,7 @@ def get_stock_price_history(ticker, start_date = None, end_date = None, n = 10):
     
     stock = yf.Ticker(ticker)
     if start_date:
-        hist = stock.history(start = start_date, end = end_date)
+        hist = stock.history(start = start_date, end = end_date + timedelta(days = 1))
     else:
         hist = stock.history(period="max")
     
@@ -96,11 +96,11 @@ def get_stock_price_realtime(ticker, start_date = None, end_date = None, n = 10)
         stock = yf.Ticker(ticker)
         today = datetime.now()
         if start_date:
-            hist = stock.history(start = start_date, end = end_date)
+            hist = stock.history(start = start_date, end = end_date + timedelta(days = 1))
         else:
             end = today
             start = today - timedelta(days = 50)
-            hist = stock.history(start = start, end = end)
+            hist = stock.history(start = start, end = end  + timedelta(days = 1))
         
         ## Massage the data            
         today_data = {'Open': pd_stock['regularMarketOpen'][0] , \
@@ -124,7 +124,8 @@ def get_stock_price_realtime(ticker, start_date = None, end_date = None, n = 10)
 
     return hist, idx_with_mins, idx_with_maxs
     
-def create_train_data(ticker, start_date = None, end_date = None, n = 10):
+def create_train_data(ticker, start_date = None, end_date = None, n = 10, \
+    cols_of_interest = ['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg', 'target']):
     # get stock data
     data, idxs_with_mins, idxs_with_maxs = get_stock_price_history(ticker, start_date, end_date, n)
 
@@ -142,7 +143,6 @@ def create_train_data(ticker, start_date = None, end_date = None, n = 10):
     _data_['target'] = [1 if x > 0 else 0 for x in _data_['loc_max']]
 
     #columns of interest
-    cols_of_interest = ['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg', 'target']
     _data_ = _data_[cols_of_interest]
 
     return _data_.dropna(axis = 0)

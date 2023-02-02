@@ -1,0 +1,13 @@
+============== PARAMS ==============
+Threshold: 0.75 
+Hold Till: 5 
+Sell Perc: 0.04 
+Stop Perc: 0.04 
+Start Date: 2022-02-01 18:34:35.696988 
+End Date: 2023-01-31 18:34:35.696988 
+
+============== Result Summary ==============
+Initial Balance: 100000.00 
+Final Balance: 83446.03 
+Total Gain: -16553.97 
+P/L: -16.55 % 

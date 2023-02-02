@@ -74,14 +74,14 @@ class simulator:
         print ("{:<10} {:<10} {:<10} {:<10}".format('STOCK', 'BUY PRICE', 'SHARES', 'TOTAL VALUE'))
         for key, value in self.buy_orders.items():
             print("{:<10} {:<10} {:<10} {:<10}".format(key, value[0], value[1], value[2]))
-            print('\n')
+        print('\n')
 
     def create_summary(self, print_results = False):
         """
         create summary
         """
         if print_results:
-            print("{:<10} {:<10} {:<10} {:<10}".format('STOCK', 'BUY PRICE', 'SHARES', 'SELL PRICE', 'NET GAIN'))
+            print("{:<10} {:<10} {:<10} {:<10} {:<10}".format('STOCK', 'BUY PRICE', 'SHARES', 'SELL PRICE', 'NET GAIN'))
 
         for values in self.history:
             net_gain = (values[3] - values[1]) * values[2]

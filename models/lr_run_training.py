@@ -27,7 +27,7 @@ import seaborn as sns
 
 class LR_training:
 
-    def __init__(self, model_version, threshold = 0.75, start_date = None, end_date = None, n = 10):
+    def __init__(self, model_version = "v1", threshold = 0.75, start_date = None, end_date = None, n = 10, stock_cats = ['hsi_tech', 'hsi_main']):
 
         self.model_version = model_version
         self.threshold = threshold
@@ -45,22 +45,33 @@ class LR_training:
 
         # get stock tickers symobols
         current_dir = os.getcwd()
-        hsi_tech = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_tech.csv'))['tickers'].tolist()
-        hsi_main = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_main.csv'))['tickers'].tolist()
-    
-        stocks = list(np.unique(hsi_tech + hsi_main))        
+        stocks = []
+        for stock_cat in stock_cats:
+            stocks = stocks + pd.read_csv(os.path.join(current_dir, f'stock_list/hsi/{stock_cat}.csv'))['tickers'].tolist()
+        stocks = list(np.unique(stocks)) 
+
+        #hsi_tech = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_tech.csv'))['tickers'].tolist()
+        #hsi_main = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_main.csv'))['tickers'].tolist()
+        #stocks = list(np.unique(hsi_tech + hsi_main))        
         #stocks = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_all.csv'))['tickers'].tolist()
         self.stocks = list(np.unique(stocks))
 
         #main dataframe
-        self.main_df = pd.DataFrame(columns = ['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg', 'target'])
+        if self.model_version == 'v1':
+            cols_of_interest = ['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg', 'target']
+        elif self.model_version == 'v2':
+            cols_of_interest = ['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', 'target']
+        else:
+            cols_of_interest = ['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg', 'target']
+
+        self.main_df = pd.DataFrame(columns = cols_of_interest)
 
         # init models
         self.scalar = MinMaxScaler()
         self.lr = LogisticRegression()
 
         # run logistic regression
-        self.fetch_data(start_date=start_date, end_date=end_date, n=n)
+        self.fetch_data(start_date=start_date, end_date=end_date, n=n, cols_of_interest=cols_of_interest)
         #self.create_train_test()
         self.create_train_test()
         self.fit_model()
@@ -68,10 +79,10 @@ class LR_training:
         self.save_model()
 
 
-    def fetch_data(self, start_date, end_date, n):
+    def fetch_data(self, start_date, end_date, n, cols_of_interest):
         for stock in self.stocks:
             try:
-                df = stock_utils.create_train_data(stock, start_date = start_date, end_date = end_date, n = n)
+                df = stock_utils.create_train_data(stock, start_date = start_date, end_date = end_date, n = n, cols_of_interest = cols_of_interest)
                 self.main_df = pd.concat([self.main_df, df])
                 print(f'Loaded {stock} stock history')
             except:
@@ -165,6 +176,7 @@ if __name__ == "__main__":
         n = 21
 
     # Start training
-    run_lr = LR_training('v2', threshold=0.95, start_date= start_date, end_date=end_date, n=n)
+    #run_lr = LR_training('v1', threshold=0.95, start_date= start_date, end_date=end_date, n=n)
+    run_lr = LR_training('v2', threshold=0.95, start_date= start_date, end_date=end_date, n=n, stock_cats=['hsi_integrated_large', 'hsi_integrated_medium', 'hsi_tech'])
 
 

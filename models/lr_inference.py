@@ -31,22 +31,28 @@ def _threshold(probs, threshold):
 
     return np.array(prob_thresholded)
 
-def LR_v1_predict(stock, start_date, end_date, threshold = 0.98, data_type='realtime'):
+def LR_predict(model_version, stock, start_date, end_date, threshold = 0.98, data_type='realtime', hold_till = 21):
     #create model and scaler instances
-    scaler = load_scaler('v2')
-    lr = load_LR('v2')
+    scaler = load_scaler(model_version)
+    lr = load_LR(model_version)
 
     #create input
     if(data_type == 'realtime'):
-        data = create_realtime_data_lr(stock)
+        data = create_realtime_data_lr(stock, n = hold_till)
     else:
-        data = create_test_data_lr(stock, start_date, end_date)
+        data = create_test_data_lr(stock, start_date, end_date, n = hold_till)
 
     #get close price of final date
     close_price = data['Close'].values[-1]
 
     #get input data to model
-    input_data = data[['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg']]
+    if model_version == 'v1':
+        input_data = data[['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg']]
+    elif model_version == 'v2':
+        input_data = data[['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg']]
+    else: 
+        input_data = data[['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg']]
+
     input_data = input_data.to_numpy()[-1].reshape(1, -1)
 
     #scale input data
@@ -56,7 +62,7 @@ def LR_v1_predict(stock, start_date, end_date, threshold = 0.98, data_type='real
 
     return prediction[:, 0], prediction_thresholded[0], close_price
 
-def LR_v1_sell(stock, buy_date, buy_price, todays_date, sell_perc = 0.1, hold_till = 3, stop_perc = 0.05):
+def LR_sell(stock, buy_date, buy_price, todays_date, sell_perc = 0.1, hold_till = 3, stop_perc = 0.05):
     current_price = get_stock_price(stock, todays_date)
     sell_price = buy_price + buy_price * sell_perc
     stop_price = buy_price - buy_price * stop_perc
