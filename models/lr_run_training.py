@@ -24,6 +24,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import seaborn as sns
+from telegram.telegram import telegram
 
 class LR_training:
 
@@ -78,6 +79,10 @@ class LR_training:
         self.confusion_matrix()
         self.save_model()
 
+        # Alert telegram that the model has been trained
+        t = telegram()
+        t.send_message(f'LR_{self.model_version} has been trained on {datetime.now()} with score = {self.score}')
+
 
     def fetch_data(self, start_date, end_date, n, cols_of_interest):
         for stock in self.stocks:
@@ -116,6 +121,12 @@ class LR_training:
         #preds with threshold
         self.predictions_proba = self.lr._predict_proba_lr(self.test_x)
         self.predictions_proba_thresholded = self._threshold(self.predictions_proba, self.threshold)
+
+        score_file = f'score_{self.model_version}.txt'
+        score_dir = os.path.join(os.getcwd(), 'saved_models', score_file)
+
+        with open(score_dir, 'w') as fp:
+            fp.write(f'Logistic Regression Model Score: {self.score} \n')
 
     def confusion_matrix(self):
         cm = confusion_matrix(self.test_y, self.predictions)
@@ -163,7 +174,7 @@ if __name__ == "__main__":
     try:
         start_date = datetime.strptime(sys.argv[2], "%Y-%m-%d")
     except:
-        start_date = datetime.now() - timedelta(days=4*365)
+        start_date = datetime.now() - timedelta(days=10*365)
 
     try:
         end_date = datetime.strptime(sys.argv[3], "%Y-%m-%d")
@@ -173,10 +184,10 @@ if __name__ == "__main__":
     try: 
         n = int(sys.argv[4])
     except:
-        n = 21
+        n = 10
 
     # Start training
-    #run_lr = LR_training('v1', threshold=0.95, start_date= start_date, end_date=end_date, n=n)
+    run_lr = LR_training('v1', threshold=0.95, start_date= start_date, end_date=end_date, n=n, stock_cats=['hsi_integrated_large', 'hsi_integrated_medium', 'hsi_tech'])
     run_lr = LR_training('v2', threshold=0.95, start_date= start_date, end_date=end_date, n=n, stock_cats=['hsi_integrated_large', 'hsi_integrated_medium', 'hsi_tech'])
 
 

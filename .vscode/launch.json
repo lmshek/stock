@@ -17,7 +17,7 @@
             "type": "python",
             "request": "launch",
             "program": "backtester.py",
-            "args": ["2022-02-02", "2023-02-01"],
+            "args": ["2022-11-31", "2023-02-01"],
             "console": "integratedTerminal",
             "justMyCode": true
         },

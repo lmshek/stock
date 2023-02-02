@@ -42,7 +42,7 @@ class stockfinder:
   
         
         # Push the buying signal to Telegram channel
-        # Get first most good probabilities stocks
+        # Get "no_of_recommendations" most good probabilities stocks
         t = telegram()
         if len(good_stocks) == 0:
             print(f'No recommendation on {datetime.now()}')
@@ -82,6 +82,6 @@ if __name__ == "__main__":
         stocks = stocks + pd.read_csv(os.path.join(current_dir, f'stock_list/hsi/{stock_cat}.csv'))['tickers'].tolist()
     stocks = list(np.unique(stocks)) 
 
-    stockfinder(stocks, LR_predict, 'v2', threshold = 0.99, sell_perc = 0.1, hold_till= 10, stop_perc = 0.05, no_of_recommendations = 1).scan()
+    stockfinder(stocks, LR_predict, 'v2', threshold = 0.99, sell_perc = 0.1, hold_till= 10, stop_perc = 0.05, no_of_recommendations = 3).scan()
 
 

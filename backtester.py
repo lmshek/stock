@@ -18,6 +18,7 @@ import pandas_datareader.data as web
 from stock_utils.bcolors import bcolors
 import sys
 import holidays
+from telegram.telegram import telegram
 
 class backtester(simulator):
 
@@ -175,6 +176,7 @@ class backtester(simulator):
 
         with open(results_summary_txt_path, 'w') as fp:
             fp.write('============== PARAMS ==============\n')
+            fp.write(f'Model: {self.model.__name__}_{self.model_version} \n')
             fp.write(f'Threshold: {self.threshold} \n')
             fp.write(f'Hold Till: {self.hold_till} \n')
             fp.write(f'Sell Perc: {self.sell_perc} \n')
@@ -188,7 +190,13 @@ class backtester(simulator):
             fp.write(f'Total Gain: {self.total_gain:.2f} \n')
             fp.write(f'P/L: {(self.total_gain / self.initial_capital) * 100:.2f} % \n')
             
-            #pickle.dump(results_summary, fp)
+        # Send telegram message about the backtest result summary
+        with open(results_summary_txt_path) as fp:
+            contents = fp.readlines()
+            t = telegram()
+            t.send_message(message=''.join([str(elem) for elem in contents]))
+
+        
 
         with open(results_summary_path, 'wb') as fp:
             pickle.dump(results_summary, fp)
