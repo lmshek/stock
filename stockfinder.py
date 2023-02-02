@@ -42,9 +42,11 @@ class stockfinder:
   
         
         # Push the buying signal to Telegram channel
-        # Get 3 most good probabilities stocks
+        # Get first most good probabilities stocks
+        t = telegram()
         if len(good_stocks) == 0:
-            print(f'No recoomendation on {datetime.now()}')
+            print(f'No recommendation on {datetime.now()}')
+            t.send_message(f'No recommendation on {datetime.now()}')
         else:    
             for key in list(good_stocks)[0:self.no_of_recommendations]:
                 stock = key
@@ -54,7 +56,7 @@ class stockfinder:
                 stop_perc = self.stop_perc
                 prediction_probability = good_stocks[key][0][0]
 
-                t = telegram()
+                
                 t.send_formatted_message(stock=stock, prediction_probability=prediction_probability, current_price=current_price, sell_perc=sell_perc, hold_till=hold_till, stop_perc=stop_perc)
 
 
@@ -70,11 +72,16 @@ if __name__ == "__main__":
         exit()
 
     current_dir = os.getcwd()    
-    hsi_tech = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_tech.csv'))['tickers'].tolist()
-    hsi_main = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_main.csv'))['tickers'].tolist()
-    stocks = list(np.unique(hsi_tech + hsi_main))       
+    #hsi_tech = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_tech.csv'))['tickers'].tolist()
+    #hsi_main = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_main.csv'))['tickers'].tolist()
+    #stocks = list(np.unique(hsi_tech + hsi_main))       
     #stocks = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_all.csv'))['tickers'].tolist()
 
-    stockfinder(stocks, LR_predict, 'v2', threshold = 0.95, sell_perc = 0.1, hold_till= 21, stop_perc = 0.05, no_of_recommendations = 3).scan()
+    stocks = []
+    for stock_cat in ['hsi_integrated_large']: #'hsi_integrated_large', 'hsi_integrated_medium',
+        stocks = stocks + pd.read_csv(os.path.join(current_dir, f'stock_list/hsi/{stock_cat}.csv'))['tickers'].tolist()
+    stocks = list(np.unique(stocks)) 
+
+    stockfinder(stocks, LR_predict, 'v2', threshold = 0.99, sell_perc = 0.1, hold_till= 10, stop_perc = 0.05, no_of_recommendations = 1).scan()
 
 
