@@ -1,1 +1,1 @@
-Logistic Regression Model Score: 0.8307622504537205 
+Logistic Regression Model Score: 0.8212341197822142 
