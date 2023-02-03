@@ -239,9 +239,12 @@ if __name__ == "__main__":
     """
     Back Test different parameters
     """  
-    backtester(stocks, LR_predict, 'v2', 100000, start_date = start_date, end_date = end_date, \
+    backtester(stocks, LR_predict, 'v1', 100000, start_date = start_date, end_date = end_date, \
         threshold = 0.99, sell_perc= 0.1, hold_till= 10, stop_perc= 0.05, no_of_splits=3).backtest()
+
     """
+    backtester(stocks, LR_predict, 'v2', 100000, start_date = start_date, end_date = end_date, \
+        threshold = 0.99, sell_perc= 0.1, hold_till= 10, stop_perc= 0.05, no_of_splits=3).backtest()    
     backtester(stocks, LR_predict, 'v2', 100000, start_date = start_date, end_date = end_date, \
         threshold = 0.95, sell_perc= 0.08, hold_till= 10, stop_perc= 0.08, no_of_splits=3).backtest()
 
