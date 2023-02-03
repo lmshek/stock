@@ -2,7 +2,7 @@ import numpy as np
 import pickle
 from sklearn.linear_model import LogisticRegression
 from stock_utils.stock_utils import timestamp, create_train_data, get_stock_price_history, create_test_data_lr, create_realtime_data_lr, get_stock_price
-from datetime import timedelta
+from datetime import timedelta, datetime
 import time
 import os
 
@@ -31,28 +31,38 @@ def _threshold(probs, threshold):
 
     return np.array(prob_thresholded)
 
-def LR_predict(model_version, stock, start_date, end_date, threshold = 0.98, data_type='realtime', hold_till = 21):
+def LR_predict(model_version, stock, start_date, end_date, threshold = 0.98, data_type='realtime', hold_till = 10):
     #create model and scaler instances
-    scaler = load_scaler(model_version)
+    scaler = load_scaler(model_version) 
     lr = load_LR(model_version)
+
+    #Interested cols
+    if model_version == 'v1':
+        interested_cols = ['Close', 'Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg']
+    elif model_version == 'v2':
+        interested_cols = ['Close', 'Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg']
+    else: 
+        interested_cols = ['Close', 'Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg']
 
     #create input
     if(data_type == 'realtime'):
-        data = create_realtime_data_lr(stock, n = hold_till)
+        today = datetime.today().date()
+        if model_version == "v1":
+            end = today - timedelta(days = 1)
+            start = today - timedelta(days = 200)
+        elif model_version == "v2":
+            end = today - timedelta(days = 1)
+            start = today - timedelta(days = 100)
+        data = create_realtime_data_lr(stock, start, end, n = hold_till, cols = interested_cols)
     else:
-        data = create_test_data_lr(stock, start_date, end_date, n = hold_till)
+        data = create_test_data_lr(stock, start_date, end_date, n = hold_till, cols = interested_cols )
 
     #get close price of final date
     close_price = data['Close'].values[-1]
 
     #get input data to model
-    if model_version == 'v1':
-        input_data = data[['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg']]
-    elif model_version == 'v2':
-        input_data = data[['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg']]
-    else: 
-        input_data = data[['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg']]
-
+    interested_cols.remove('Close')
+    input_data = data[interested_cols]
     input_data = input_data.to_numpy()[-1].reshape(1, -1)
 
     #scale input data

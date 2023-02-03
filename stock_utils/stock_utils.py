@@ -94,12 +94,12 @@ def get_stock_price_realtime(ticker, start_date = None, end_date = None, n = 10)
     #only market cap > 10 billion will be considered
     if(pd_stock['marketCap'][0] > 1e10):
         stock = yf.Ticker(ticker)
-        today = datetime.now()
+        today = datetime.today().date()
         if start_date:
             hist = stock.history(start = start_date, end = end_date + timedelta(days = 1))
         else:
-            end = today
-            start = today - timedelta(days = 50)
+            end = today - timedelta(days = 1)
+            start = today - timedelta(days = 100)
             hist = stock.history(start = start, end = end  + timedelta(days = 1))
         
         ## Massage the data            
@@ -111,8 +111,8 @@ def get_stock_price_realtime(ticker, start_date = None, end_date = None, n = 10)
             'Dividends': 0, \
             'Stock Splits': 0
             }        
-        today_series = pd.Series(today_data, name=today)
-        hist.append(today_series)
+        today_series = pd.Series(today_data, name=pd.to_datetime(today))
+        hist = hist.append(today_series)
         hist['normalized_value'] = hist.apply(lambda x: normalixed_value(x['High'], x['Low'], x['Close']), axis = 1)
         hist['loc_min'] = hist.iloc[argrelextrema(hist['Close'].values, np.less_equal, order = n)[0]]['Close']
         hist['loc_max'] = hist.iloc[argrelextrema(hist['Close'].values, np.greater_equal, order =n)[0]]['Close']
@@ -147,7 +147,8 @@ def create_train_data(ticker, start_date = None, end_date = None, n = 10, \
 
     return _data_.dropna(axis = 0)
 
-def create_test_data_lr(ticker, start_date = None, end_date = None, n = 10):
+def create_test_data_lr(ticker, start_date = None, end_date = None, n = 10, cols = ['Close', 'Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg']
+    ):
     #get data to a dataframe
     data, _, _ = get_stock_price_history(ticker, start_date, end_date, n)
     idxs = np.arange(0, len(data))
@@ -160,14 +161,14 @@ def create_test_data_lr(ticker, start_date = None, end_date = None, n = 10):
     data = n_day_regression(50, data, idxs)
     data = n_day_regression(100, data, idxs)
 
-    cols = ['Close', 'Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg']
     data = data[cols]
 
     return data.dropna(axis = 0)
 
-def create_realtime_data_lr(ticker, n = 10):
+def create_realtime_data_lr(ticker, start_date, end_date, n = 10, cols = ['Close', 'Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg']
+    ):
     #get data to a dataframe
-    data, _, _ = get_stock_price_realtime(ticker)
+    data, _, _ = get_stock_price_realtime(ticker, start_date=start_date, end_date=end_date)
     idxs = np.arange(0, len(data))
 
     #create regressions for 3, 5, 10 and 20 days
@@ -178,7 +179,6 @@ def create_realtime_data_lr(ticker, n = 10):
     data = n_day_regression(50, data, idxs)
     data = n_day_regression(100, data, idxs)
 
-    cols = ['Close', 'Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg']
     data = data[cols]
 
     return data.dropna(axis = 0)

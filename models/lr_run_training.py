@@ -81,7 +81,7 @@ class LR_training:
 
         # Alert telegram that the model has been trained
         t = telegram()
-        t.send_message(f'LR_{self.model_version} has been trained on {datetime.now()} with score = {self.score}')
+        t.send_message(f'LR_{self.model_version} has been trained at {datetime.now().strftime("%H:%M:%S")} with score = {self.score}')
 
 
     def fetch_data(self, start_date, end_date, n, cols_of_interest):

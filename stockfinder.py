@@ -29,11 +29,12 @@ class stockfinder:
         model_recommended_stocks = {}
         for stock in self.stocks:
             try:
-                prediction, prediction_thresholded, current_price = self.model(self.model_version, stock, '', '', self.threshold, data_type="realtime")
+                prediction, prediction_thresholded, current_price = self.model(self.model_version, stock, '', '', self.threshold, data_type="realtime", hold_till = self.hold_till)
 
                 if prediction_thresholded < 1:
                     model_recommended_stocks[stock] = (prediction, prediction_thresholded, current_price)
-            except:
+            except Exception as err:
+                print(err)
                 pass   
         def take_first(elem):
             return elem[1]  
@@ -95,7 +96,7 @@ if __name__ == "__main__":
     stocks = list(np.unique(stocks)) 
 
     
-    stockfinder(stocks, LR_predict, 'v1', threshold = 0.5, sell_perc = 0.1, hold_till= 10, stop_perc = 0.05, no_of_recommendations = 3).scan()
-    stockfinder(stocks, LR_predict, 'v2', threshold = 0.5, sell_perc = 0.1, hold_till= 10, stop_perc = 0.05, no_of_recommendations = 3).scan()
+    stockfinder(stocks, LR_predict, 'v1', threshold = 0.95, sell_perc = 0.1, hold_till= 10, stop_perc = 0.05, no_of_recommendations = 3).scan()
+    stockfinder(stocks, LR_predict, 'v2', threshold = 0.95, sell_perc = 0.1, hold_till= 10, stop_perc = 0.05, no_of_recommendations = 3).scan()
 
 
