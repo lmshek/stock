@@ -58,7 +58,7 @@ class stockfinder:
                 prediction_probability = good_stocks[key][0][0]
 
                 
-                t.send_formatted_message(stock=stock, prediction_probability=prediction_probability, current_price=current_price, sell_perc=sell_perc, hold_till=hold_till, stop_perc=stop_perc)
+                t.send_formatted_message(model_name=f"{self.model.__name__}_{self.model_version}" , stock=stock, prediction_probability=prediction_probability, current_price=current_price, sell_perc=sell_perc, hold_till=hold_till, stop_perc=stop_perc)
 
 
 
