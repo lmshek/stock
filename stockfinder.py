@@ -45,8 +45,8 @@ class stockfinder:
         # Get "no_of_recommendations" most good probabilities stocks
         t = telegram()
         if len(good_stocks) == 0:
-            print(f'No recommendation on {datetime.now()} by {self.model.__name__}_{self.model_version}')
-            t.send_message(f'No recommendation on {datetime.now()} by {self.model.__name__}_{self.model_version}')
+            print(f'No recommendation at {datetime.now().strftime("%H:%M:%S")} by {self.model.__name__}_{self.model_version}')
+            t.send_message(f'No recommendation at {datetime.now().strftime("%H:%M:%S")} by {self.model.__name__}_{self.model_version}')
         else:    
             for key in list(good_stocks)[0:self.no_of_recommendations]:
                 stock = key
