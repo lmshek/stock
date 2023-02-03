@@ -4,11 +4,11 @@ Threshold: 0.99
 Hold Till: 10 
 Sell Perc: 0.1 
 Stop Perc: 0.05 
-Start Date: 2023-01-31 00:00:00 
+Start Date: 2022-01-31 00:00:00 
 End Date: 2023-02-01 00:00:00 
 
 ============== Result Summary ==============
 Initial Balance: 100000.00 
-Final Balance: 100000.00 
-Total Gain: 0.00 
-P/L: 0.00 % 
+Final Balance: 113233.10 
+Total Gain: 13233.10 
+P/L: 13.23 % 
