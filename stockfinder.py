@@ -1,5 +1,5 @@
 import pandas_datareader as web
-from datetime import date, datetime
+from datetime import date, datetime, time
 import holidays
 import numpy as np
 import pandas as pd
@@ -65,10 +65,22 @@ class stockfinder:
 
 if __name__ == "__main__":
 
+    def is_time_between(begin_time, end_time, check_time=None):
+        # If check time is not given, default to current Now time
+        check_time = check_time or datetime.now().time()
+        if begin_time < end_time:
+            return check_time >= begin_time and check_time <= end_time
+        else: # crosses midnight
+            return check_time >= begin_time or check_time <= end_time
+
     #Check if today is holiday
     hk_holidays = holidays.HK()
     today = date.today()
     if(today in hk_holidays):
+        exit()
+
+    # Check if now is between 09:45 and 16:00 (market time)
+    if not is_time_between(time(9,30), time(16,00)):
         exit()
 
     current_dir = os.getcwd()    
@@ -83,7 +95,7 @@ if __name__ == "__main__":
     stocks = list(np.unique(stocks)) 
 
     
-    stockfinder(stocks, LR_predict, 'v1', threshold = 0.99, sell_perc = 0.1, hold_till= 10, stop_perc = 0.05, no_of_recommendations = 3).scan()
-    stockfinder(stocks, LR_predict, 'v2', threshold = 0.99, sell_perc = 0.1, hold_till= 10, stop_perc = 0.05, no_of_recommendations = 3).scan()
+    stockfinder(stocks, LR_predict, 'v1', threshold = 0.5, sell_perc = 0.1, hold_till= 10, stop_perc = 0.05, no_of_recommendations = 3).scan()
+    stockfinder(stocks, LR_predict, 'v2', threshold = 0.5, sell_perc = 0.1, hold_till= 10, stop_perc = 0.05, no_of_recommendations = 3).scan()
 
 

@@ -176,6 +176,7 @@ class backtester(simulator):
 
         with open(results_summary_txt_path, 'w') as fp:
             fp.write('============== PARAMS ==============\n')
+            fp.write(f'No. of stocks: {len(self.stocks)}\n')
             fp.write(f'Model: {self.model.__name__}_{self.model_version} \n')
             fp.write(f'Threshold: {self.threshold} \n')
             fp.write(f'Hold Till: {self.hold_till} \n')

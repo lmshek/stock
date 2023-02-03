@@ -1,0 +1,2 @@
+Set-Location -Path "C:\Users\lmshek.CITYUMD\Documents\GitHubExternal\stock\"
+C:\ProgramData\Anaconda3\envs\testing\python.exe backtester.py (get-date).AddYears(-1).ToString("yyyy-MM-dd") (get-date).AddDays(-1).ToString("yyyy-MM-dd")

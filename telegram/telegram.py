@@ -2,10 +2,12 @@ import requests
 import os
 from datetime import date, timedelta, datetime
 import holidays
+from dotenv import load_dotenv
 
 class telegram:
 
     def send_message(self, message):
+        load_dotenv()
         api_token = os.getenv('API_TOKEN')
         chat_id = os.getenv('CHAT_ID')
         api_url = f'https://api.telegram.org/bot{api_token}/sendMessage'
