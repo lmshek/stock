@@ -16,7 +16,7 @@ class telegram:
         except Exception as e:
             print(e)
 
-    def send_formatted_message(self, stock, prediction_probability, current_price, sell_perc, hold_till, stop_perc):
+    def send_formatted_message(self, model_name, stock, prediction_probability, current_price, sell_perc, hold_till, stop_perc):
         
         today = date.today()
         hk_holidays = holidays.HK()
