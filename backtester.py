@@ -5,7 +5,7 @@ from models import lr_inference
 from datetime import datetime, timedelta, date
 import pandas as pd
 import yfinance as yf
-from models.lr_inference import LR_sell, LR_predict
+from models.lr_inference_stock import LR_sell, LR_predict
 from data_science.stats import create_stats
 from data_science.create_figures import create_figures 
 import warnings
@@ -130,7 +130,7 @@ class backtester(simulator):
         self.save_results()
         return
     
-    def get_stock_data(self, stock, back_to = 200):
+    def get_stock_data(self, stock, back_to = 300):
         """
         this function queries to yf and get data of a particular stock on a given day back to certain amount of days
         (default is 30)
@@ -240,7 +240,7 @@ if __name__ == "__main__":
     """
     Back Test different parameters
     """  
-    backtester(stocks, LR_predict, 'v1', 100000, start_date = start_date, end_date = end_date, \
+    backtester(stocks, LR_predict, 'v3', 100000, start_date = start_date, end_date = end_date, \
         threshold = 0.99, sell_perc= 0.1, hold_till= 10, stop_perc= 0.05, no_of_splits=3).backtest()
 
     """

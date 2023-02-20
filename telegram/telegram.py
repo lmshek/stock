@@ -18,7 +18,7 @@ class telegram:
         except Exception as e:
             print(e)
 
-    def send_formatted_message(self, model_name, stock, prediction_probability, current_price, sell_perc, hold_till, stop_perc):
+    def send_formatted_message(self, model_name, stock, current_price, sell_perc, hold_till, stop_perc):
         
         today = date.today()
         hk_holidays = holidays.HK()
@@ -30,8 +30,7 @@ class telegram:
         message = "<u><b>BUY SIGNAL</b></u>\n" \
             + f"Model: {model_name} \n" \
             + f"Date Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} \n" \
-            + f"Stock: {stock} (<a href=\"http://charts.aastocks.com/servlet/Charts?fontsize=12&15MinDelay=T&lang=1&titlestyle=1&vol=1&Indicator=9&indpara1=20&indpara2=2&indpara3=0&indpara4=0&indpara5=0&subChart1=2&ref1para1=14&ref1para2=0&ref1para3=0&subChart2=3&ref2para1=12&ref2para2=26&ref2para3=9&subChart3=12&ref3para1=0&ref3para2=0&ref3para3=0&scheme=3&com=100&chartwidth=870&chartheight=855&stockid=00{stock}&period=6&type=1&logoStyle=1\">AAStock Chart</a>) \n" \
-            + f"Prediction: {round(prediction_probability * 100,2)}% \n" \
+            + f"Stock: {stock} (<a href=\"http://charts.aastocks.com/servlet/Charts?fontsize=12&15MinDelay=T&lang=1&titlestyle=1&vol=1&Indicator=1&indpara1=10&indpara2=20&indpara3=50&indpara4=100&indpara5=150&subChart1=2&ref1para1=14&ref1para2=0&ref1para3=0&subChart2=7&ref2para1=14&ref2para2=3&ref2para3=0&subChart3=12&ref3para1=0&ref3para2=0&ref3para3=0&subChart4=3&ref4para1=12&ref4para2=26&ref4para3=9&scheme=3&com=100&chartwidth=870&chartheight=945&stockid=00{stock}&period=9&type=1&logoStyle=1&\">AAStock Chart</a>) \n" \
             + f"Current Price: ${round(current_price,2)} \n" \
             + f"Take Profit at: ${round(current_price * (1 + sell_perc), 2)} (+{sell_perc * 100}%) \n" \
             + f"Stop at: ${round(current_price * (1 - stop_perc), 2)} (-{stop_perc * 100}%) \n" \

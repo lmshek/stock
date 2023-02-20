@@ -6,6 +6,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime, timedelta, time
 import pandas_datareader as web
+import pandas_ta as ta
 
 
 """
@@ -54,22 +55,38 @@ def get_stock_price(ticker, date):
 
     return hist['Close'].values[-1]
 
-def get_stock_price_history(ticker, start_date = None, end_date = None, n = 10):
+def get_stock_price_history(ticker, start_date = None, end_date = None, n = 10, take_profit_rate = 0.1, stop_loss_rate = 0.5):
     
     stock = yf.Ticker(ticker)
     if start_date:
         hist = stock.history(start = start_date, end = end_date + timedelta(days = 1))
     else:
         hist = stock.history(period="max")
-    
+
     hist['normalized_value'] = hist.apply(lambda x: normalixed_value(x['High'], x['Low'], x['Close']), axis = 1)
-    hist['loc_min'] = hist.iloc[argrelextrema(hist['Close'].values, np.less_equal, order = n)[0]]['Close']
-    hist['loc_max'] = hist.iloc[argrelextrema(hist['Close'].values, np.greater_equal, order =n)[0]]['Close']
+    
+    hist[f'10_sma'] = hist.ta.sma(length = 10)
+    hist[f'50_sma'] = hist.ta.sma(length = 50)
+    hist[f'200_sma'] = hist.ta.sma(length = 200)
+    hist[f'10_rsi'] = hist.ta.rsi(length = 10)
+    hist[f'50_rsi'] = hist.ta.rsi(length = 50)
+    hist[f'200_rsi'] = hist.ta.rsi(length = 200)
 
-    idx_with_mins = np.where(hist['loc_min'] > 0)[0]
-    idx_with_maxs = np.where(hist['loc_max'] > 0)[0]
+    #hist['rolling_min'] = hist['Close'].rolling(n, closed='left').min()
+    #hist['rolling_max'] = hist['Close'].rolling(n, closed='left').max()
+    hist['wins'] = hist['Close'] >= hist['Close'].rolling(n, closed='left').min() * (1 + take_profit_rate)
+    hist['loses'] = hist['Close'] < hist['Close'].rolling(n, closed='left').max() * (1 - stop_loss_rate)
+    #hist['target'] = np.logical_and(hist['wins'], ~hist['loses'])
+    hist['target'] = hist['wins']
+    
+    #hist['loc_min'] = hist.iloc[argrelextrema(hist['Close'].values, np.less_equal, order = n)[0]]['Close']
+    #hist['loc_max'] = hist.iloc[argrelextrema(hist['Close'].values, np.greater_equal, order =n)[0]]['Close']
 
-    return hist, idx_with_mins, idx_with_maxs
+    targets = np.where(hist[hist['target']])[0]    
+
+    hist.drop(columns=['wins', 'loses'])
+
+    return hist, targets
 
 def project_daily_volume(current_volume):
     morning_start = time(9,30,0)
@@ -90,94 +107,82 @@ def project_daily_volume(current_volume):
 def get_stock_price_realtime(ticker, start_date = None, end_date = None, n = 10):
     
     pd_stock = web.get_quote_yahoo(ticker)
-
-    #only market cap > 10 billion will be considered
-    if(pd_stock['marketCap'][0] > 1e10):
-        stock = yf.Ticker(ticker)
-        today = datetime.today().date()
-        if start_date:
-            hist = stock.history(start = start_date, end = end_date + timedelta(days = 1))
-        else:
-            end = today - timedelta(days = 1)
-            start = today - timedelta(days = 100)
-            hist = stock.history(start = start, end = end  + timedelta(days = 1))
-        
-        ## Massage the data            
-        today_data = {'Open': pd_stock['regularMarketOpen'][0] , \
-            'High': pd_stock['regularMarketDayHigh'][0], \
-            'Low': pd_stock['regularMarketDayLow'][0], \
-            'Close': pd_stock['regularMarketPrice'][0], \
-            'Volume': project_daily_volume(pd_stock['regularMarketVolume'][0]), \
-            'Dividends': 0, \
-            'Stock Splits': 0
-            }        
-        today_series = pd.Series(today_data, name=pd.to_datetime(today))
-        hist = hist.append(today_series)
-        hist['normalized_value'] = hist.apply(lambda x: normalixed_value(x['High'], x['Low'], x['Close']), axis = 1)
-        hist['loc_min'] = hist.iloc[argrelextrema(hist['Close'].values, np.less_equal, order = n)[0]]['Close']
-        hist['loc_max'] = hist.iloc[argrelextrema(hist['Close'].values, np.greater_equal, order =n)[0]]['Close']
-
-        idx_with_mins = np.where(hist['loc_min'] > 0)[0]
-        idx_with_maxs = np.where(hist['loc_max'] > 0)[0]
+    
+    stock = yf.Ticker(ticker)
+    today = datetime.today().date()
+    if start_date:
+        hist = stock.history(start = start_date, end = end_date + timedelta(days = 1))
     else:
-        raise Exception("Market Cap is not big enough")
+        end = today - timedelta(days = 1)
+        start = today - timedelta(days = 100)
+        hist = stock.history(start = start, end = end  + timedelta(days = 1))
+    
+    ## Massage the data            
+    today_data = {'Open': pd_stock['regularMarketOpen'][0] , \
+        'High': pd_stock['regularMarketDayHigh'][0], \
+        'Low': pd_stock['regularMarketDayLow'][0], \
+        'Close': pd_stock['regularMarketPrice'][0], \
+        'Volume': project_daily_volume(pd_stock['regularMarketVolume'][0]), \
+        'Dividends': 0, \
+        'Stock Splits': 0
+        }        
+    today_series = pd.Series(today_data, name=pd.to_datetime(today))
+    hist = hist.append(today_series)
+    hist['normalized_value'] = hist.apply(lambda x: normalixed_value(x['High'], x['Low'], x['Close']), axis = 1)
+    hist[f'10_sma'] = hist.ta.sma(length = 10)
+    hist[f'50_sma'] = hist.ta.sma(length = 50)
+    hist[f'200_sma'] = hist.ta.sma(length = 200)
+    hist[f'10_rsi'] = hist.ta.rsi(length = 10)
+    hist[f'50_rsi'] = hist.ta.rsi(length = 50)
+    hist[f'200_rsi'] = hist.ta.rsi(length = 200)
 
-    return hist, idx_with_mins, idx_with_maxs
+
+    return hist
     
 def create_train_data(ticker, start_date = None, end_date = None, n = 10, \
-    cols_of_interest = ['Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg', 'target']):
+    cols_of_interest = ['Volume', 'normalized_value', 
+    '10_sma', '50_sma', '200_sma', 
+    '10_rsi', '50_rsi', '200_rsi', 
+     'target'], take_profit_rate = 0.1, stop_lose_rate = 0.5):
     # get stock data
-    data, idxs_with_mins, idxs_with_maxs = get_stock_price_history(ticker, start_date, end_date, n)
+    data, targets = get_stock_price_history(ticker, start_date, end_date, n, take_profit_rate, stop_lose_rate)
 
     #create regressions for 3, 5, 10 and 20 days
-    data = n_day_regression(3, data, list(idxs_with_mins) + list(idxs_with_maxs))
-    data = n_day_regression(5, data, list(idxs_with_mins) + list(idxs_with_maxs))
-    data = n_day_regression(10, data, list(idxs_with_mins) + list(idxs_with_maxs))
-    data = n_day_regression(20, data, list(idxs_with_mins) + list(idxs_with_maxs))
-    data = n_day_regression(50, data, list(idxs_with_mins) + list(idxs_with_maxs))
-    data = n_day_regression(100, data, list(idxs_with_mins) + list(idxs_with_maxs))
+    #data = n_day_regression(3, data, targets)
+    #data = n_day_regression(5, data, targets)
+    #data = n_day_regression(10, data, targets)
+    #data = n_day_regression(20, data, targets)
+    #data = n_day_regression(50, data, list(idxs_with_mins) + list(idxs_with_maxs))
+    #data = n_day_regression(100, data, list(idxs_with_mins) + list(idxs_with_maxs))
+    #_data_ = data[(data['loc_min'] > 0) | (data['loc_max'] > 0)].reset_index(drop = True)
+    
+    ## create a dummy variable for local_min (0) and max (1)
+    #_data_['target'] = [1 if x > 0 else 0 for x in _data_['loc_max']]
 
-    _data_ = data[(data['loc_min'] > 0) | (data['loc_max'] > 0)].reset_index(drop = True)
-
-    # create a dummy variable for local_min (0) and max (1)
-    _data_['target'] = [1 if x > 0 else 0 for x in _data_['loc_max']]
+    #_data_ = data[data['target']]
 
     #columns of interest
-    _data_ = _data_[cols_of_interest]
+    _data_ = data[cols_of_interest]
 
     return _data_.dropna(axis = 0)
 
-def create_test_data_lr(ticker, start_date = None, end_date = None, n = 10, cols = ['Close', 'Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg']
+def create_test_data_lr(ticker, start_date = None, end_date = None, n = 10, cols = ['Volume', 'normalized_value', 
+    '10_sma', '50_sma', '200_sma', 
+    '10_rsi', '50_rsi', '200_rsi']
     ):
     #get data to a dataframe
-    data, _, _ = get_stock_price_history(ticker, start_date, end_date, n)
-    idxs = np.arange(0, len(data))
-
-    #create regressions for 3, 5, 10 and 20 days
-    data = n_day_regression(3, data, idxs)
-    data = n_day_regression(5, data, idxs)
-    data = n_day_regression(10, data, idxs)
-    data = n_day_regression(20, data, idxs)
-    data = n_day_regression(50, data, idxs)
-    data = n_day_regression(100, data, idxs)
+    data, _ = get_stock_price_history(ticker, start_date, end_date, n)
 
     data = data[cols]
 
     return data.dropna(axis = 0)
 
-def create_realtime_data_lr(ticker, start_date, end_date, n = 10, cols = ['Close', 'Volume', 'normalized_value', '3_reg', '5_reg', '10_reg', '20_reg', '50_reg', '100_reg']
+def create_realtime_data_lr(ticker, start_date, end_date, n = 10, cols = ['Volume', 'normalized_value', 
+    '10_sma', '50_sma', '200_sma', 
+    '10_rsi', '50_rsi', '200_rsi']
     ):
     #get data to a dataframe
-    data, _, _ = get_stock_price_realtime(ticker, start_date=start_date, end_date=end_date)
-    idxs = np.arange(0, len(data))
-
-    #create regressions for 3, 5, 10 and 20 days
-    data = n_day_regression(3, data, idxs)
-    data = n_day_regression(5, data, idxs)
-    data = n_day_regression(10, data, idxs)
-    data = n_day_regression(20, data, idxs)
-    data = n_day_regression(50, data, idxs)
-    data = n_day_regression(100, data, idxs)
+    data = get_stock_price_realtime(ticker, start_date=start_date, end_date=end_date)
 
     data = data[cols]
 

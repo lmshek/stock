@@ -1,0 +1,15 @@
+============== PARAMS ==============
+No. of stocks: 10
+Model: LR_predict_v3 
+Threshold: 0.99 
+Hold Till: 10 
+Sell Perc: 0.1 
+Stop Perc: 0.05 
+Start Date: 2022-01-31 00:00:00 
+End Date: 2023-02-01 00:00:00 
+
+============== Result Summary ==============
+Initial Balance: 100000.00 
+Final Balance: 95394.30 
+Total Gain: -4605.70 
+P/L: -4.61 % 

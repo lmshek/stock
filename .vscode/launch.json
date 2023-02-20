@@ -37,6 +37,15 @@
             "args": ["0.95", "2012-02-01", "2022-02-01", "10"],
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "Breakout Finder",
+            "type": "python",
+            "request": "launch",
+            "program": "breakoutfinder.py",
+            "args": [],
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }
