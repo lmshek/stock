@@ -40,7 +40,7 @@ class stockfinder_technical:
         def take_first(elem):
             return elem[1][1]['Volume'][0]
         
-        good_stocks = OrderedDict(sorted(model_recommended_stocks.items(), key = take_first, reverse = False))
+        good_stocks = OrderedDict(sorted(model_recommended_stocks.items(), key = take_first, reverse = True))
   
         
         # Push the buying signal to Telegram channel
