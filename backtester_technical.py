@@ -98,18 +98,19 @@ class backtester(simulator):
                         for daily_recommanded_stock, recommand_params in self.daily_scanner.items():
                             recommanded_stock = daily_recommanded_stock
                             data = recommand_params[1]
+                            multiplier = recommand_params[2]
                             recommanded_price = recommand_params[0]
 
                             if recommanded_stock in self.buy_orders: # if we have already bought the stock, we will not buy it again.
                                 continue
                             if no_of_stock_buy_today == 0: # we only buy 1 stock in 1 day
-                                self.buy(recommanded_stock, recommanded_price, self.day, self.no_of_splits_available, 1) # buy stock
+                                self.buy(recommanded_stock, recommanded_price, self.day, self.no_of_splits_available, multiplier) # buy stock
                                 self.no_of_splits_available -= 1
                                 no_of_stock_buy_today += 1
                                 print(f'{bcolors.HEADER}No. of splits available: {self.no_of_splits_available}{bcolors.ENDC}')
                             else:                    
-                                print(f'Missed {len(self.daily_scanner.keys()) - no_of_stock_buy_today} other potential stocks on {self.day.strftime("%Y-%m-%d")}')
-                                break
+                                print(f'Missed potential stocks {daily_recommanded_stock} at ${recommanded_price} on {self.day.strftime("%Y-%m-%d")}')
+                                
                     else:
                         print(f'No recommandations on {self.day.strftime("%Y-%m-%d")}')
                         pass
@@ -129,7 +130,7 @@ class backtester(simulator):
         self.save_results()
         return
     
-    def get_stock_data(self, stock, back_to = 100):
+    def get_stock_data(self, stock, back_to = 220):
         """
         this function queries to yf and get data of a particular stock on a given day back to certain amount of days
         (default is 30)
@@ -137,8 +138,8 @@ class backtester(simulator):
         #get start and end dates
         end = self.day
         start = self.day - timedelta(days = back_to)
-        buy_signal, close_price, today_stock_data = self.model(stock, start_date=start, end_date=end)
-        return buy_signal, close_price, today_stock_data
+        buy_signal, close_price, today_stock_data, multiplier = self.model(stock, start_date=start, end_date=end)
+        return buy_signal, close_price, today_stock_data, multiplier
 
     def scanner(self):
         """
@@ -146,15 +147,14 @@ class backtester(simulator):
         """
         for stock in self.stocks:
             try: #to ignore the stock if no data is available. #for aturdays or sundays etc
-                buy_signal, close_price, today_stock_data = self.get_stock_data(stock, back_to=100)
+                buy_signal, close_price, today_stock_data, multiplier = self.get_stock_data(stock, back_to=300)
                 #if prediction greater than
                 if buy_signal: 
-                    self.daily_scanner[stock] = (close_price, today_stock_data)
+                    self.daily_scanner[stock] = (close_price, today_stock_data, multiplier)
             except:
                 pass
         def take_first(elem):
-            # RSI
-            return elem[1][1]['Volume'][0]
+            return elem[1][1]['RSI_14'][0]
         self.daily_scanner = OrderedDict(sorted(self.daily_scanner.items(), key = take_first, reverse = False))
 
         
@@ -225,7 +225,7 @@ if __name__ == "__main__":
     try:
         start_date = datetime.strptime(sys.argv[1], "%Y-%m-%d")
     except:
-        start_date = datetime.now() - timedelta(days=365 * 3)
+        start_date = datetime.now() - timedelta(days=365)
 
     try:
         end_date = datetime.strptime(sys.argv[2], "%Y-%m-%d")
@@ -235,8 +235,8 @@ if __name__ == "__main__":
     """
     Back Test different parameters
     """  
-    backtester(stocks, rsi14, 'v3', 100000, start_date = start_date, end_date = end_date, \
-        sell_perc= 0.21, hold_till= 14, stop_perc= 0.07, no_of_splits=3).backtest()
+    backtester(stocks, stoch_k_d, 'v3', 60000, start_date = start_date, end_date = end_date, \
+        sell_perc= 0.14, hold_till= 10, stop_perc= 0.07, no_of_splits=3).backtest()
 
 
 

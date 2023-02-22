@@ -16,7 +16,7 @@ class simulator:
         cols = ['stock', 'buy_price', 'n_shares', 'sell_price', 'net_gain', 'buy_date', 'sell_date']
         self.history_df = pd.DataFrame(columns = cols)
 
-    def buy(self, stock, buy_price, buy_date, no_of_splits, probability):
+    def buy(self, stock, buy_price, buy_date, no_of_splits, multiplier):
         """
         function takes buy price and the number of shares and buy the stock
         """
@@ -27,7 +27,7 @@ class simulator:
         self.buy_orders[stock] = [buy_price, n_shares, buy_price * n_shares, buy_date]
 
 
-        print(f'{bcolors.OKCYAN}Bought {stock} for {buy_price} with probabilities {round(probability * 100, 2)}% on the {buy_date.strftime("%Y-%m-%d")}. Account Balance: {self.capital}{bcolors.ENDC}')
+        print(f'{bcolors.OKCYAN}Bought {stock} for {buy_price} with multiplier {multiplier} on the {buy_date.strftime("%Y-%m-%d")}. Account Balance: {self.capital}{bcolors.ENDC}')
 
     def sell(self, stock, sell_price, n_shares_sell, sell_date, buy_price):
         """

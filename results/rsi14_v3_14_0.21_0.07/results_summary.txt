@@ -1,14 +1,14 @@
 ============== PARAMS ==============
 No. of stocks: 323
-Model: stoch_k_d_v3 
+Model: rsi14_v3 
 Hold Till: 14 
 Sell Perc: 0.21 
 Stop Perc: 0.07 
-Start Date: 2020-02-18 11:52:07.413136 
-End Date: 2023-02-16 11:52:07.413136 
+Start Date: 2022-02-20 15:11:48.066772 
+End Date: 2023-02-19 15:11:48.066772 
 
 ============== Result Summary ==============
 Initial Balance: 100000.00 
-Final Balance: 117102.63 
-Total Gain: 17102.63 
-P/L: 17.10 % 
+Final Balance: 74088.85 
+Total Gain: -25911.15 
+P/L: -25.91 % 
