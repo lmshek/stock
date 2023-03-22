@@ -33,8 +33,9 @@ class stockfinder_technical:
         t = telegram()
 
         for index, inventory in inventories.iterrows():
+            hold_till = (datetime.strptime(inventory['hold_till'], "%Y-%m-%d") - datetime.strptime(inventory['buy_date'], "%Y-%m-%d")).days
             recommended_action, current_price = stoch_sell(inventory['ticker'], datetime.strptime(inventory['buy_date'], "%Y-%m-%d"), inventory['buy_price'], self.day, \
-                self.sell_perc, self.hold_till, self.stop_perc)
+                self.sell_perc, hold_till, self.stop_perc)
             if recommended_action == "SELL":
 
                 message = "<u><b>SELL SIGNAL</b></u>\n" \
@@ -144,7 +145,7 @@ if __name__ == "__main__":
     stocks = list(np.unique(stocks)) 
 
     
-    sf = stockfinder_technical(stocks, stoch_k_d, 'v1', sell_perc = 0.14, hold_till= 10, stop_perc = 0.07, no_of_recommendations = 2)
+    sf = stockfinder_technical(stocks, stoch_k_d, 'v1', sell_perc = 0.14, hold_till= 7, stop_perc = 0.07, no_of_recommendations = 5)
     sf.scan_selling_signal()
     sf.scan_buying_signal()    
 
