@@ -116,7 +116,7 @@ class stockfinder_technical_breakout:
                     link = f"https://www.tradingview.com/chart/dPvcvEPT/?symbol=SGX%3A{sg_stock}"
                 elif market == 'FOREX':
                     forex_ticker = urllib.parse.quote_plus(stock)
-                    link = f"https://finance.yahoo.com/quote/{forex_ticker}/chart?p={forex_ticker}"
+                    link = f"https://finance.yahoo.com/quote/{forex_ticker}/chart?p={forex_ticker}" 
 
                 message = "<u><b>BUY SIGNAL</b></u>\n" \
                     + f"Date Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} \n" \
