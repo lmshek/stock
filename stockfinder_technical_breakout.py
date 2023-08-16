@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, date
 from stock_utils import stock_utils
 import yfinance as yf
 import argparse
+import urllib.parse
 
 
 class stockfinder_technical_breakout:
@@ -102,13 +103,31 @@ class stockfinder_technical_breakout:
                 today = date.today()      
                 hold_till = stock_utils.get_market_real_date(today, handle_len)
 
+                link = ''
+                if market == 'HK':
+                    link = f"http://charts.aastocks.com/servlet/Charts?fontsize=12&15MinDelay=T&lang=1&titlestyle=1&vol=1&Indicator=1&indpara1=10&indpara2=20&indpara3=50&indpara4=100&indpara5=150&subChart1=2&ref1para1=14&ref1para2=0&ref1para3=0&subChart2=7&ref2para1=14&ref2para2=3&ref2para3=0&subChart3=12&ref3para1=0&ref3para2=0&ref3para3=0&subChart4=3&ref4para1=12&ref4para2=26&ref4para3=9&scheme=3&com=100&chartwidth=870&chartheight=945&stockid=00{stock}&period=9&type=1&logoStyle=1&"
+                elif market == 'US':
+                    link = f"https://charts.aastocks.com/servlet/Charts?fontsize=12&15MinDelay=T&titlestyle=1&lang=1&vol=1&stockid={stock}.US&period=6&type=1&com=70005&scheme=3&chartwidth=870&chartheight=855&Indicator=1&indpara1=10&indpara2=20&indpara3=50&indpara4=100&indpara5=150&subChart1=2&ref1para1=14&ref1para2=0&ref1para3=0&subChart2=3&ref2para1=12&ref2para2=26&ref2para3=9&subChart3=12"
+                elif market == 'JP':
+                    jp_stock = stock.replace('.T', '')
+                    link = f"https://www.tradingview.com/chart/dPvcvEPT/?symbol=TSE%3A{jp_stock}"
+                elif market == 'SG':
+                    sg_stock = stock.replace('.SI', '')
+                    link = f"https://www.tradingview.com/chart/dPvcvEPT/?symbol=SGX%3A{sg_stock}"
+                elif market == 'FOREX':
+                    forex_ticker = urllib.parse.quote_plus(stock)
+                    link = f"https://finance.yahoo.com/quote/{forex_ticker}/chart?p={forex_ticker}"
+
                 message = "<u><b>BUY SIGNAL</b></u>\n" \
                     + f"Date Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} \n" \
-                    + f"Stock: <a href=\"http://charts.aastocks.com/servlet/Charts?fontsize=12&15MinDelay=T&lang=1&titlestyle=1&vol=1&Indicator=1&indpara1=10&indpara2=20&indpara3=50&indpara4=100&indpara5=150&subChart1=2&ref1para1=14&ref1para2=0&ref1para3=0&subChart2=7&ref2para1=14&ref2para2=3&ref2para3=0&subChart3=12&ref3para1=0&ref3para2=0&ref3para3=0&subChart4=3&ref4para1=12&ref4para2=26&ref4para3=9&scheme=3&com=100&chartwidth=870&chartheight=945&stockid=00{stock}&period=9&type=1&logoStyle=1&\">{stock}</a> \n" \
+                    + f"Stock: <a href=\"{link}\">{stock}</a> \n" \
                     + f"Current Price: ${round(current_price,2)} \n" \
                     + f"Take Profit at: ${round(current_price * (1 + cup_depth), 2)} (+{round(cup_depth * 100, 2)}%) \n" \
                     + f"Stop at: ${round(current_price * (1 - handle_depth), 2)} (-{round(handle_depth * 100, 2)}%) \n" \
-                    + f"Cup Handle Length and Depth: {cup_len} {handle_len} {round(cup_depth, 5)} {round(handle_depth, 5)}\n" \
+                    + f"Cup Length: {cup_len}\n" \
+                    + f"Handle Length: {handle_len}\n" \
+                    + f"Cup Depth: {round(cup_depth, 5)}\n" \
+                    + f"Handle Depth: {round(handle_depth, 5)}\n" \
                     + f"Hold till: {(today + timedelta(hold_till)).strftime('%Y-%m-%d')} ({hold_till} days)\n" 
 
                 t.send_message(message)
@@ -142,7 +161,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # Add an argument to accept a list of strings
-    parser.add_argument('--market', type=str, help='Country of the Market (e.g. HK, US)')
+    parser.add_argument('--market', type=str, help='Country of the Market (e.g. HK, US, JP, SG, FOREX)')
     parser.add_argument('--stock_list', nargs='+', help='List of the stocks (e.g. hsi_main, dow_jones, nasdaq_100)')
     
     # Parse the command-line arguments
@@ -153,13 +172,23 @@ if __name__ == "__main__":
     stock_list = args.stock_list
 
     #Check if today is holiday
-    market_holidays = getattr(holidays, market)()    
+    if market == "FOREX":
+        market_holiday = "HK" 
+    else: 
+        market_holiday = market
+    market_holidays = getattr(holidays, market_holiday)()    
     today = date.today()
     if(today in market_holidays):
         exit()
 
-    # Check if now is between 09:45 and 16:00 (market time) for HK Market
+    # Check if now is between HK / JP / SG / US Market Trading Hours
     if market == "HK" and not is_time_between(time(9,30), time(16,00)):
+        exit()
+    if market == "JP" and not is_time_between(time(8,00), time(14,00)):
+        exit()
+    if market == "SG" and not is_time_between(time(9,00), time(17,00)):
+        exit()
+    if market == "US" and not is_time_between(time(21,30), time(23,59)):
         exit()
 
     current_dir = os.getcwd()    
