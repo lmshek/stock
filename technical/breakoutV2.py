@@ -103,7 +103,7 @@ def breakout(all_time_stock_data, start_date = None, end_date = None):
 
                 cup_formed = cup_left_high > cup_mid_low and cup_mid_low < cup_right_high \
                     and is_similar(cup_left_high, cup_right_high, threshold=0.05)
-                handle_formed = handle_depth > 0 and handle_depth <= cup_depth * 0.40 \
+                handle_formed = handle_depth > 0 and handle_depth <= cup_depth * 0.40 and (ts_handle_right - ts_handle_left).days < (ts_cup_right - ts_cup_left).days\
                     and handle_left_high > handle_mid_low and handle_mid_low < handle_right_high \
                     and is_similar(handle_left_high, handle_right_high, threshold= 0.05)
                 going_to_breakout = cup_left_high * 0.90 < handle_right_high and handle_right_high < cup_left_high * 1.05
