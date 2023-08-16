@@ -190,7 +190,7 @@ if __name__ == "__main__":
         exit()
     if market == "US" and not is_time_between(time(21,30), time(23,59)):
         exit()
-
+         
     current_dir = os.getcwd()    
     #hsi_tech = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_tech.csv'))['tickers'].tolist()
     #hsi_main = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_main.csv'))['tickers'].tolist()
