@@ -109,7 +109,7 @@ class stockfinder_technical_breakout:
         t = telegram()
         if len(good_stocks) == 0:
             print(f'No recommendation at {datetime.now().strftime("%H:%M:%S")} by {self.model.__name__}_{self.model_version} in market {self.market}')
-            t.send_message(f'No recommendation at {datetime.now().strftime("%H:%M:%S")} by {self.model.__name__}_{self.model_version} in market {self.market}')
+            #t.send_message(f'No recommendation at {datetime.now().strftime("%H:%M:%S")} by {self.model.__name__}_{self.model_version} in market {self.market}')
         else:    
             for key in list(good_stocks)[0:self.no_of_recommendations]:
                 stock = key
@@ -146,12 +146,12 @@ class stockfinder_technical_breakout:
                     sg_stock = stock.replace('.SI', '')
                     link = f"https://www.tradingview.com/chart/?symbol=SGX%3A{sg_stock}"
 
-                message = f"<u><b>BUY {self.market} SIGNAL</b></u>\n" \
+                message = f"<u><b>BUY {self.market} STOCK</b></u>\n" \
                     + f"Date Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} \n" \
                     + f"Stock: <a href=\"{link}\">{stock}</a> \n" \
                     + f"Current Price: {currency} {round(current_price,2)} \n" \
                     + f"Take Profit at: {currency} {round(current_price * (1 + cup_depth), 2)} (+{round(cup_depth * 100, 2)}%) \n" \
-                    + f"Stop at: ${round(current_price * (1 - handle_depth), 2)} (-{round(handle_depth * 100, 2)}%) \n" \
+                    + f"Stop at: {currency} {round(current_price * (1 - handle_depth), 2)} (-{round(handle_depth * 100, 2)}%) \n" \
                     + f"Cup Length: {cup_len}\n" \
                     + f"Handle Length: {handle_len}\n" \
                     + f"Cup Depth: {round(cup_depth, 5)}\n" \
