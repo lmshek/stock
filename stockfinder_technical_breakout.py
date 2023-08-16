@@ -47,12 +47,34 @@ class stockfinder_technical_breakout:
         for index, inventory in inventories.iterrows():            
             recommended_action, current_price = breakout_sell(self.stock_data[inventory['ticker']], self.market, inventory['ticker'], datetime.strptime(inventory['buy_date'], "%Y-%m-%d"), inventory['buy_price'], self.day, inventory['cup_len'], inventory['handle_len'], inventory['cup_depth'], inventory['handle_depth'])
             if "SELL" in recommended_action:
-                message = "<u><b>SELL {self.market} STOCK</b></u>\n" \
+                currency = ''
+                link = ''
+                stock = inventory['ticker']
+                if market == 'HK' and ".HK" in stock:
+                    currency = 'HKD'
+                    link = f"http://charts.aastocks.com/servlet/Charts?fontsize=12&15MinDelay=T&lang=1&titlestyle=1&vol=1&Indicator=1&indpara1=10&indpara2=20&indpara3=50&indpara4=100&indpara5=150&subChart1=2&ref1para1=14&ref1para2=0&ref1para3=0&subChart2=7&ref2para1=14&ref2para2=3&ref2para3=0&subChart3=12&ref3para1=0&ref3para2=0&ref3para3=0&subChart4=3&ref4para1=12&ref4para2=26&ref4para3=9&scheme=3&com=100&chartwidth=870&chartheight=945&stockid=00{stock}&period=9&type=1&logoStyle=1&"
+                elif market == 'HK' and not ".HK" in stock:
+                    currency = 'USD'
+                    forex_ticker = urllib.parse.quote_plus(stock)
+                    link = f"https://finance.yahoo.com/quote/{forex_ticker}/chart?p={forex_ticker}"
+                elif market == 'US':
+                    currency = 'USD'
+                    link = f"https://charts.aastocks.com/servlet/Charts?fontsize=12&15MinDelay=T&titlestyle=1&lang=1&vol=1&stockid={stock}.US&period=6&type=1&com=70005&scheme=3&chartwidth=870&chartheight=855&Indicator=1&indpara1=10&indpara2=20&indpara3=50&indpara4=100&indpara5=150&subChart1=2&ref1para1=14&ref1para2=0&ref1para3=0&subChart2=3&ref2para1=12&ref2para2=26&ref2para3=9&subChart3=12"
+                elif market == 'JP':
+                    currency = 'JPY'
+                    jp_stock = stock.replace('.T', '')
+                    link = f"https://www.tradingview.com/chart/dPvcvEPT/?symbol=TSE%3A{jp_stock}"
+                elif market == 'SG':
+                    currency = 'SGD'
+                    sg_stock = stock.replace('.SI', '')
+                    link = f"https://www.tradingview.com/chart/dPvcvEPT/?symbol=SGX%3A{sg_stock}"
+
+                message = f"<u><b>SELL {self.market} STOCK</b></u>\n" \
                     + f"Recommendation: {recommended_action}" \
                     + f"Date Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} \n" \
-                    + f"Stock: <a href=\"http://charts.aastocks.com/servlet/Charts?fontsize=12&15MinDelay=T&lang=1&titlestyle=1&vol=1&Indicator=1&indpara1=10&indpara2=20&indpara3=50&indpara4=100&indpara5=150&subChart1=2&ref1para1=14&ref1para2=0&ref1para3=0&subChart2=7&ref2para1=14&ref2para2=3&ref2para3=0&subChart3=12&ref3para1=0&ref3para2=0&ref3para3=0&subChart4=3&ref4para1=12&ref4para2=26&ref4para3=9&scheme=3&com=100&chartwidth=870&chartheight=945&stockid=00{inventory['ticker']}&period=9&type=1&logoStyle=1&\">{inventory['ticker']}</a> \n" \
-                    + f"Current Price: ${round(current_price,2)} \n" \
-                    + f"Bought Price: ${round(inventory['buy_price'],2)} \n" \
+                    + f"Stock: <a href=\"{link}\">{inventory['ticker']}</a> \n" \
+                    + f"Current Price: {currency} {round(current_price,2)} \n" \
+                    + f"Bought Price: {currency} {round(inventory['buy_price'],2)} \n" \
                     + f"Bought Date: {inventory['buy_date']} \n" \
                     + f"Cup Length: {inventory['cup_len']} \n" \
                     + f"Handle Length: {inventory['handle_len']} \n" \
@@ -103,27 +125,32 @@ class stockfinder_technical_breakout:
                 hold_till = stock_utils.get_market_real_date(self.market, today, handle_len)
 
 
-                message = "<u><b>BUY {self.market} STOCK</b></u>\n" 
+                currency = ''
                 link = ''
                 if market == 'HK' and ".HK" in stock:
+                    currency = 'HKD'
                     link = f"http://charts.aastocks.com/servlet/Charts?fontsize=12&15MinDelay=T&lang=1&titlestyle=1&vol=1&Indicator=1&indpara1=10&indpara2=20&indpara3=50&indpara4=100&indpara5=150&subChart1=2&ref1para1=14&ref1para2=0&ref1para3=0&subChart2=7&ref2para1=14&ref2para2=3&ref2para3=0&subChart3=12&ref3para1=0&ref3para2=0&ref3para3=0&subChart4=3&ref4para1=12&ref4para2=26&ref4para3=9&scheme=3&com=100&chartwidth=870&chartheight=945&stockid=00{stock}&period=9&type=1&logoStyle=1&"
                 elif market == 'HK' and not ".HK" in stock:
+                    currency = 'USD'
                     forex_ticker = urllib.parse.quote_plus(stock)
                     link = f"https://finance.yahoo.com/quote/{forex_ticker}/chart?p={forex_ticker}"
                 elif market == 'US':
+                    currency = 'USD'
                     link = f"https://charts.aastocks.com/servlet/Charts?fontsize=12&15MinDelay=T&titlestyle=1&lang=1&vol=1&stockid={stock}.US&period=6&type=1&com=70005&scheme=3&chartwidth=870&chartheight=855&Indicator=1&indpara1=10&indpara2=20&indpara3=50&indpara4=100&indpara5=150&subChart1=2&ref1para1=14&ref1para2=0&ref1para3=0&subChart2=3&ref2para1=12&ref2para2=26&ref2para3=9&subChart3=12"
                 elif market == 'JP':
+                    currency = 'JPY'
                     jp_stock = stock.replace('.T', '')
-                    link = f"https://www.tradingview.com/chart/dPvcvEPT/?symbol=TSE%3A{jp_stock}"
+                    link = f"https://www.tradingview.com/chart/?symbol=TSE%3A{jp_stock}"
                 elif market == 'SG':
+                    currency = 'SGD'
                     sg_stock = stock.replace('.SI', '')
-                    link = f"https://www.tradingview.com/chart/dPvcvEPT/?symbol=SGX%3A{sg_stock}"
+                    link = f"https://www.tradingview.com/chart/?symbol=SGX%3A{sg_stock}"
 
-                message = "<u><b>BUY SIGNAL</b></u>\n" \
+                message = f"<u><b>BUY {self.market} SIGNAL</b></u>\n" \
                     + f"Date Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} \n" \
                     + f"Stock: <a href=\"{link}\">{stock}</a> \n" \
-                    + f"Current Price: ${round(current_price,2)} \n" \
-                    + f"Take Profit at: ${round(current_price * (1 + cup_depth), 2)} (+{round(cup_depth * 100, 2)}%) \n" \
+                    + f"Current Price: {currency} {round(current_price,2)} \n" \
+                    + f"Take Profit at: {currency} {round(current_price * (1 + cup_depth), 2)} (+{round(cup_depth * 100, 2)}%) \n" \
                     + f"Stop at: ${round(current_price * (1 - handle_depth), 2)} (-{round(handle_depth * 100, 2)}%) \n" \
                     + f"Cup Length: {cup_len}\n" \
                     + f"Handle Length: {handle_len}\n" \
