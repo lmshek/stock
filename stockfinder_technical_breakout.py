@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, date
 from stock_utils import stock_utils
 import yfinance as yf
 import argparse
+import urllib.parse
 
 
 class stockfinder_technical_breakout:
@@ -31,7 +32,7 @@ class stockfinder_technical_breakout:
         for ticker in self.stocks:
             try:
                 stock = yf.Ticker(ticker)
-                self.stock_data[ticker] = stock.history(start = stock_utils.get_market_real_date(self.day, -self.days_before_start_date), end = self.day + timedelta(days = 1), repair="silent", raise_errors=True, rounding=True)
+                self.stock_data[ticker] = stock.history(start = stock_utils.get_market_real_date(self.market, self.day, -self.days_before_start_date), end = self.day + timedelta(days = 1), repair="silent", raise_errors=True, rounding=True)
                 #self.stock_data[ticker] = stock.history(period="max", repair="silent", raise_errors=True, rounding=True, keepna=True)
             except Exception as e:
                 continue
@@ -44,7 +45,7 @@ class stockfinder_technical_breakout:
         t = telegram()
 
         for index, inventory in inventories.iterrows():            
-            recommended_action, current_price = breakout_sell(self.stock_data[inventory['ticker']], inventory['ticker'], datetime.strptime(inventory['buy_date'], "%Y-%m-%d"), inventory['buy_price'], self.day, inventory['cup_len'], inventory['handle_len'], inventory['cup_depth'], inventory['handle_depth'])
+            recommended_action, current_price = breakout_sell(self.stock_data[inventory['ticker']], self.market, inventory['ticker'], datetime.strptime(inventory['buy_date'], "%Y-%m-%d"), inventory['buy_price'], self.day, inventory['cup_len'], inventory['handle_len'], inventory['cup_depth'], inventory['handle_depth'])
             if "SELL" in recommended_action:
                 message = "<u><b>SELL {self.market} STOCK</b></u>\n" \
                     + f"Recommendation: {recommended_action}" \
@@ -99,11 +100,28 @@ class stockfinder_technical_breakout:
 
                 
                 today = date.today()      
-                hold_till = stock_utils.get_market_real_date(today, handle_len)
+                hold_till = stock_utils.get_market_real_date(self.market, today, handle_len)
 
-                message = "<u><b>BUY {self.market} STOCK</b></u>\n" \
+
+                message = "<u><b>BUY {self.market} STOCK</b></u>\n" 
+                link = ''
+                if market == 'HK' and ".HK" in stock:
+                    link = f"http://charts.aastocks.com/servlet/Charts?fontsize=12&15MinDelay=T&lang=1&titlestyle=1&vol=1&Indicator=1&indpara1=10&indpara2=20&indpara3=50&indpara4=100&indpara5=150&subChart1=2&ref1para1=14&ref1para2=0&ref1para3=0&subChart2=7&ref2para1=14&ref2para2=3&ref2para3=0&subChart3=12&ref3para1=0&ref3para2=0&ref3para3=0&subChart4=3&ref4para1=12&ref4para2=26&ref4para3=9&scheme=3&com=100&chartwidth=870&chartheight=945&stockid=00{stock}&period=9&type=1&logoStyle=1&"
+                elif market == 'HK' and not ".HK" in stock:
+                    forex_ticker = urllib.parse.quote_plus(stock)
+                    link = f"https://finance.yahoo.com/quote/{forex_ticker}/chart?p={forex_ticker}"
+                elif market == 'US':
+                    link = f"https://charts.aastocks.com/servlet/Charts?fontsize=12&15MinDelay=T&titlestyle=1&lang=1&vol=1&stockid={stock}.US&period=6&type=1&com=70005&scheme=3&chartwidth=870&chartheight=855&Indicator=1&indpara1=10&indpara2=20&indpara3=50&indpara4=100&indpara5=150&subChart1=2&ref1para1=14&ref1para2=0&ref1para3=0&subChart2=3&ref2para1=12&ref2para2=26&ref2para3=9&subChart3=12"
+                elif market == 'JP':
+                    jp_stock = stock.replace('.T', '')
+                    link = f"https://www.tradingview.com/chart/dPvcvEPT/?symbol=TSE%3A{jp_stock}"
+                elif market == 'SG':
+                    sg_stock = stock.replace('.SI', '')
+                    link = f"https://www.tradingview.com/chart/dPvcvEPT/?symbol=SGX%3A{sg_stock}"
+
+                message = "<u><b>BUY SIGNAL</b></u>\n" \
                     + f"Date Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} \n" \
-                    + f"Stock: <a href=\"https://www.tradingview.com/chart/\">{stock}</a> \n" \
+                    + f"Stock: <a href=\"{link}\">{stock}</a> \n" \
                     + f"Current Price: ${round(current_price,2)} \n" \
                     + f"Take Profit at: ${round(current_price * (1 + cup_depth), 2)} (+{round(cup_depth * 100, 2)}%) \n" \
                     + f"Stop at: ${round(current_price * (1 - handle_depth), 2)} (-{round(handle_depth * 100, 2)}%) \n" \
@@ -123,7 +141,7 @@ class stockfinder_technical_breakout:
         """
         #get start and end dates
         end = self.day
-        start = stock_utils.get_market_real_date(end, -self.days_before_start_date)
+        start = stock_utils.get_market_real_date(self.market, end, -self.days_before_start_date)
         buy_signal, close_price, today_stock_data, multiplier = self.model(self.stock_data[stock], start_date=start, end_date=end)
         return buy_signal, close_price, today_stock_data, multiplier
 
@@ -160,7 +178,8 @@ if __name__ == "__main__":
     if(today in market_holidays):
         exit()
 
-    # Check if now is between 09:45 and 16:00 (market time) for HK Market
+    # Check if now is in Market Hours
+    """
     if market == "HK" and not is_time_between(time(9,30), time(16,00)):
         exit()
     if market == "JP" and not is_time_between(time(8,00), time(14,00)):
@@ -169,6 +188,7 @@ if __name__ == "__main__":
         exit()
     if market == "US" and not is_time_between(time(21,30), time(23,59)):
         exit()
+    """
          
     current_dir = os.getcwd()    
     #hsi_tech = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_tech.csv'))['tickers'].tolist()
