@@ -7,6 +7,7 @@ from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime, timedelta, time
 import pandas_datareader as web
 import pandas_ta as ta
+import holidays
 
 
 """
@@ -221,6 +222,36 @@ def predict_trend(ticker, _model_, start_date = None, end_date = None, n = 10):
     
     return data
 
+def get_market_real_date(date, add_days):
+    market_date = date
+    hk_holidays = holidays.HK()
+    if add_days > 0:
+        i = 1
+        while i <= add_days:
+            market_date = market_date + timedelta(days = 1)
+            if not(market_date in hk_holidays or hk_holidays._is_weekend(market_date)):  
+                i = i + 1
+    else:
+        i = 1
+        while i <= abs(add_days):
+            market_date = market_date - timedelta(days = 1)
+            if not(market_date in hk_holidays or hk_holidays._is_weekend(market_date)):  
+                i = i + 1
+
+    return market_date
+
+def get_market_days(start_date, end_date):
+    real_days = (end_date - start_date).days
+    hk_holidays = holidays.HK()
+    i = 1
+    market_days = 0
+    while i <= real_days:
+        market_date = start_date + timedelta(days = i)
+        if not(market_date in hk_holidays or hk_holidays._is_weekend(market_date)):              
+            market_days = market_days + 1
+        i = i + 1
+
+    return market_days
 
     
 

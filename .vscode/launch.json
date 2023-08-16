@@ -5,47 +5,27 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Stock Finder",
+            "name": "Stock Finder Breakout V2",
             "type": "python",
             "request": "launch",
-            "program": "stockfinder.py",
+            "program": "stockfinder_technical_breakout.py",
+            "args": ["--market", "HK", 
+                "--stock_list", "hsi_integrated_large", "hsi_integrated_medium", "hsi_integrated_small", "nikkei_226", "sti", "forex"
+               ],
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": false
         },
         {
-            "name": "Back Test",
+            "name": "Back Test Breakout V2",
             "type": "python",
             "request": "launch",
-            "program": "backtester.py",
-            "args": ["2022-01-31", "2023-02-01"],
+            "program": "backtester_technical_breakout.py",
+            "args": ["--market", "US", 
+                "--stock_list", "nasdaq_100", "dow_jones", 
+                "--days_before_today_as_start", "1095",
+                "--days_before_today_as_end", "0",],
             "console": "integratedTerminal",
-            "justMyCode": true
-        },
-        {
-            "name": "Train Model",
-            "type": "python",
-            "request": "launch",
-            "program": "models/lr_run_training.py",
-            "console": "integratedTerminal",
-            "justMyCode": true
-        },
-        {
-            "name": "Train Model from 1 year ago to 10 year ago",
-            "type": "python",
-            "request": "launch",
-            "program": "models/lr_run_training.py",
-            "args": ["0.95", "2012-02-01", "2022-02-01", "10"],
-            "console": "integratedTerminal",
-            "justMyCode": true
-        },
-        {
-            "name": "Breakout Finder",
-            "type": "python",
-            "request": "launch",
-            "program": "breakoutfinder.py",
-            "args": [],
-            "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": false
         }
     ]
 }

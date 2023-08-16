@@ -1,0 +1,11 @@
+============== PARAMS ==============
+No. of stocks: 112
+Model: breakout_v2 
+Start Date: 2022-08-11 10:53:29.151813 
+End Date: 2023-08-11 10:53:29.151813 
+
+============== Result Summary ==============
+Initial Balance: 1000000.00 
+Final Balance: 981003.02 
+Total Gain: -18996.98 
+P/L: -1.90 % 
