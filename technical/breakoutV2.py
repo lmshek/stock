@@ -109,7 +109,7 @@ def breakout(all_time_stock_data, start_date = None, end_date = None):
                 going_to_breakout = cup_left_high * 0.90 < handle_right_high and handle_right_high < cup_left_high * 1.05
 
 
-                vol_increase = hist['Volume'][-3] <= hist['Volume'][-2]
+                vol_increase = hist['Volume'][-2] <= hist['Volume'][-1]
                 price_condition = hist['Close'][-1] > 0.5 and is_similar(hist['Close'][-1], handle_right_high, threshold=0.05)
 
                 potential_cup_and_handle = cup_formed & handle_formed & going_to_breakout & vol_increase & price_condition               

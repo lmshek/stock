@@ -156,7 +156,7 @@ class stockfinder_technical_breakout:
                     + f"Handle Length: {handle_len}\n" \
                     + f"Cup Depth: {round(cup_depth, 5)}\n" \
                     + f"Handle Depth: {round(handle_depth, 5)}\n" \
-                    + f"Risk Reward Ratio: {round(cup_depth / handle_depth * 100, 2)} \n" \
+                    + f"Risk Reward Ratio: {round((cup_depth / handle_depth) * 100, 2)} \n" \
                     + f"Hold till: {(hold_till).strftime('%Y-%m-%d')} ({handle_len} days)\n" 
 
                 t.send_message(message)
