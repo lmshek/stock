@@ -163,7 +163,13 @@ if __name__ == "__main__":
     # Check if now is between 09:45 and 16:00 (market time) for HK Market
     if market == "HK" and not is_time_between(time(9,30), time(16,00)):
         exit()
-
+    if market == "JP" and not is_time_between(time(8,00), time(14,00)):
+        exit()
+    if market == "SG" and not is_time_between(time(9,00), time(17,00)):
+        exit()
+    if market == "US" and not is_time_between(time(21,30), time(23,59)):
+        exit()
+         
     current_dir = os.getcwd()    
     #hsi_tech = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_tech.csv'))['tickers'].tolist()
     #hsi_main = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_main.csv'))['tickers'].tolist()
