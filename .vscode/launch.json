@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "stockfinder_technical_breakout.py",
             "args": ["--market", "HK", 
-                "--stock_list", "hsi_integrated_large", "hsi_integrated_medium", "hsi_integrated_small", "nikkei_225", "sti", "forex"
+                "--stock_list", "hsi_integrated_large", "hsi_integrated_medium", "hsi_integrated_small", "forex"
                ],
             "console": "integratedTerminal",
             "justMyCode": false

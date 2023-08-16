@@ -222,20 +222,20 @@ def predict_trend(ticker, _model_, start_date = None, end_date = None, n = 10):
     
     return data
 
-def get_market_real_date(date, add_days):
+def get_market_real_date(market, date, add_days):
     market_date = date
-    hk_holidays = holidays.HK()
+    market_holidays = getattr(holidays, market)()    
     if add_days > 0:
         i = 1
         while i <= add_days:
             market_date = market_date + timedelta(days = 1)
-            if not(market_date in hk_holidays or hk_holidays._is_weekend(market_date)):  
+            if not(market_date in market_holidays or market_holidays._is_weekend(market_date)):  
                 i = i + 1
     else:
         i = 1
         while i <= abs(add_days):
             market_date = market_date - timedelta(days = 1)
-            if not(market_date in hk_holidays or hk_holidays._is_weekend(market_date)):  
+            if not(market_date in market_holidays or market_holidays._is_weekend(market_date)):  
                 i = i + 1
 
     return market_date

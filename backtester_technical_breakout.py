@@ -61,7 +61,7 @@ class backtester(simulator):
         for ticker in self.stocks:
             try:
                 stock = yf.Ticker(ticker)
-                self.stock_data[ticker] = stock.history(start = stock_utils.get_market_real_date(start_date, -self.days_before_start_date), end = end_date.date() + timedelta(days = 1), repair="silent", raise_errors=True, rounding=True)
+                self.stock_data[ticker] = stock.history(start = stock_utils.get_market_real_date(self.market, start_date, -self.days_before_start_date), end = end_date.date() + timedelta(days = 1), repair="silent", raise_errors=True, rounding=True)
                 #self.stock_data[ticker] = stock.history(period="max", repair="silent", raise_errors=True, rounding=True, keepna=True)
             except Exception as e:
                 # Print the exception message
@@ -95,7 +95,7 @@ class backtester(simulator):
                 #check if any stock should sell, or any stock hit the maturity date 
                 stocks = [key for key in self.buy_orders.keys()]
                 for s in stocks:
-                    recommended_action, current_price = breakout_sell(self.stock_data, s, self.buy_orders[s][3], self.buy_orders[s][0], self.day, self.buy_orders[s][4], self.buy_orders[s][5], self.buy_orders[s][6], self.buy_orders[s][7])
+                    recommended_action, current_price = breakout_sell(self.stock_data, self.market, s, self.buy_orders[s][3], self.buy_orders[s][0], self.day, self.buy_orders[s][4], self.buy_orders[s][5], self.buy_orders[s][6], self.buy_orders[s][7])
                     if "SELL" in recommended_action:
                         self.sell(s, current_price, self.buy_orders[s][1], self.day, self.buy_orders[s][0], recommended_action, self.buy_orders[s][4], self.buy_orders[s][5], self.buy_orders[s][6], self.buy_orders[s][7])
                         self.no_of_splits_available += 1
@@ -154,7 +154,7 @@ class backtester(simulator):
         """
         #get start and end dates
         end = self.day
-        start = stock_utils.get_market_real_date(end, -self.days_before_start_date)
+        start = stock_utils.get_market_real_date(self.market, end, -self.days_before_start_date)
         buy_signal, close_price, today_stock_data, multiplier = self.model(self.stock_data[stock], start_date=start, end_date=end)
         return buy_signal, close_price, today_stock_data, multiplier
 

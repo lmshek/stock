@@ -156,14 +156,14 @@ def breakout_buy(simulator, stock, buy_price, buy_date, no_of_splits, cup_len, h
 
         print(f'{bcolors.OKCYAN}Bought {stock} for {buy_price} with risk reward ratio {cup_depth / handle_depth} on the {buy_date.strftime("%Y-%m-%d")} . Account Balance: {simulator.capital}{bcolors.ENDC}')
 
-def breakout_sell(stock_data, ticker, buy_date, buy_price, todays_date, cup_len, handle_len, cup_depth, handle_depth):
+def breakout_sell(stock_data, market, ticker, buy_date, buy_price, todays_date, cup_len, handle_len, cup_depth, handle_depth):
     try :
         hist = stock_data[ticker]        
         
         current_price = hist['Close'][todays_date.date():todays_date.date()].values[-1]
         sell_price = buy_price + buy_price * cup_depth
         stop_price = buy_price - buy_price * handle_depth
-        sell_date = stock_utils.get_market_real_date(buy_date, handle_len) # selling date        
+        sell_date = stock_utils.get_market_real_date(market, buy_date, handle_len) # selling date        
         time.sleep(1) #to make sure the requested transactions per seconds is not exceeded
 
         if (current_price is not None):
