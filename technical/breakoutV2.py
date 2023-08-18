@@ -105,14 +105,15 @@ def breakout(all_time_stock_data, start_date = None, end_date = None):
                     and is_similar(cup_left_high, cup_right_high, threshold=0.05)
                 handle_formed = handle_depth > 0 and handle_depth <= cup_depth * 0.40 and (ts_handle_right - ts_handle_left).days < (ts_cup_right - ts_cup_left).days\
                     and handle_left_high > handle_mid_low and handle_mid_low < handle_right_high \
-                    and is_similar(handle_left_high, handle_right_high, threshold= 0.05)
-                going_to_breakout = cup_left_high * 0.90 < handle_right_high and handle_right_high < cup_left_high * 1.05
+                    and is_similar(handle_left_high, handle_right_high, threshold= 0.05) \
+                    and cup_depth / handle_depth <= 5.0
+                going_to_breakout = is_similar(cup_left_high, handle_right_high, threshold=0.05) and is_similar(handle_right_high, hist['Close'][-1], threshold=0.05)
 
 
                 vol_increase = hist['Volume'][-2] <= hist['Volume'][-1]
-                price_condition = hist['Close'][-1] > 0.5 and is_similar(hist['Close'][-1], handle_right_high, threshold=0.05)
+                #price_condition = hist['Close'][-1] > 0.5 and is_similar(hist['Close'][-1], handle_right_high, threshold=0.05)
 
-                potential_cup_and_handle = cup_formed & handle_formed & going_to_breakout & vol_increase & price_condition               
+                potential_cup_and_handle = cup_formed & handle_formed & going_to_breakout & vol_increase           
 
                 if potential_cup_and_handle and target_cup_depth < cup_depth / hist['Close'][-1]: #and handle_depth / hist['Close'][-1] >= 0.04:
                     hist['cup_len'] = (ts_cup_right - ts_cup_left).days
