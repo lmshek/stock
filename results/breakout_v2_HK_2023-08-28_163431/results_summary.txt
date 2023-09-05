@@ -1,0 +1,12 @@
+============== PARAMS ==============
+Market: HK
+No. of stocks: 323
+Model: breakout_v2 
+Start Date: 2018-08-29 16:34:31.956500 
+End Date: 2023-08-28 16:34:31.956500 
+
+============== Result Summary ==============
+Initial Balance: 1000000.00 
+Final Balance: 1029819.03 
+Total Gain: 29819.03 
+P/L: 2.98 % 

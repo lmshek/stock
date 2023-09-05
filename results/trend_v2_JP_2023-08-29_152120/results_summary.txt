@@ -1,0 +1,12 @@
+============== PARAMS ==============
+Market: JP
+No. of stocks: 225
+Model: trend_v2 
+Start Date: 2020-08-29 15:21:20.735993 
+End Date: 2023-08-29 15:21:20.735993 
+
+============== Result Summary ==============
+Initial Balance: 1000000.00 
+Final Balance: 1142046.84 
+Total Gain: 142046.84 
+P/L: 14.20 % 

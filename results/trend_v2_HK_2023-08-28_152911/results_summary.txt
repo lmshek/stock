@@ -1,0 +1,12 @@
+============== PARAMS ==============
+Market: HK
+No. of stocks: 323
+Model: trend_v2 
+Start Date: 2018-08-29 15:29:11.157181 
+End Date: 2023-08-28 15:29:11.157181 
+
+============== Result Summary ==============
+Initial Balance: 1000000.00 
+Final Balance: 1456706.89 
+Total Gain: 456706.89 
+P/L: 45.67 % 

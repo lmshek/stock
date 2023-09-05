@@ -1,0 +1,12 @@
+============== PARAMS ==============
+Market: US
+No. of stocks: 112
+Model: trend_v2 
+Start Date: 2018-08-26 11:27:29.066692 
+End Date: 2023-08-25 11:27:29.066692 
+
+============== Result Summary ==============
+Initial Balance: 1000000.00 
+Final Balance: 2158145.87 
+Total Gain: 1158145.87 
+P/L: 115.81 % 
