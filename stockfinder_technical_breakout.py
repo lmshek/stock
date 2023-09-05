@@ -133,7 +133,7 @@ class stockfinder_technical_breakout:
                     link = f"https://www.tradingview.com/chart/?symbol=HKEX%3A{hk_stock}"
                 elif market == 'HK' and not ".HK" in stock:
                     forex_ticker = stock.replace('=X', '')
-                    link = f"https://www.tradingview.com/chart/?symbol=SAXO%3A{forex_ticker}"
+                    link = f"https://www.tradingview.com/chart/?symbol=FX_IDC%3A{forex_ticker}"
                 elif market == 'US':
                     currency = 'USD'
                     ticker = yf.Ticker(stock)
