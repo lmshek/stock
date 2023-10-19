@@ -4,6 +4,9 @@ import pandas as pd
 from stock_utils.bcolors import bcolors
 from datetime import datetime, timedelta
 from stock_utils import stock_utils
+from telegram.telegram import telegram
+import csv
+import os
 
 class simulator:
 
@@ -34,7 +37,7 @@ class simulator:
                                 ]
 
 
-        print(f'{bcolors.OKCYAN}Bought {stock} for {buy_price} with on the {buy_date.strftime("%Y-%m-%d")}. Account Balance: {self.capital}{bcolors.ENDC}')
+        self.log(f'{bcolors.OKCYAN}Bought {stock} for {buy_price} with on the {buy_date.strftime("%Y-%m-%d")}. Account Balance: {self.capital}{bcolors.ENDC}')
 
     def sell(self, stock, sell_price, n_shares_sell, sell_date, buy_price, recommended_action, cup_len, handle_len, cup_depth, handle_depth):
         """
@@ -56,9 +59,9 @@ class simulator:
         profit = sell_price - buy_price 
                
         if profit > 0:
-            print(f'{bcolors.OKGREEN}{recommended_action} - Sold {stock} for {sell_price} (Make profit {round(profit / buy_price * 100, 2)}%) on {sell_date.strftime("%Y-%m-%d")}. Account Balance: {self.capital}{bcolors.ENDC}')
+            self.log(f'{bcolors.OKGREEN}{recommended_action} - Sold {stock} for {sell_price} (Make profit {round(profit / buy_price * 100, 2)}%) on {sell_date.strftime("%Y-%m-%d")}. Account Balance: {self.capital}{bcolors.ENDC}')
         else:
-            print(f'{bcolors.FAIL}{recommended_action} - Sold {stock} for {sell_price} (Lose money {round(profit / buy_price * 100, 2)}%) on {sell_date.strftime("%Y-%m-%d")}. Account Balance: {self.capital}{bcolors.ENDC}')
+            self.log(f'{bcolors.FAIL}{recommended_action} - Sold {stock} for {sell_price} (Lose money {round(profit / buy_price * 100, 2)}%) on {sell_date.strftime("%Y-%m-%d")}. Account Balance: {self.capital}{bcolors.ENDC}')
 
     def buy_percentage(self, buy_price, buy_perc = 1):
         """
@@ -78,7 +81,7 @@ class simulator:
         """
         print current stocks holding
         """
-        print ("{:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<14} {:<10} {:<10} {:<10} {:<14} {:<10}".format('DATE', 'STOCK', 'BUY PRICE', 'TODAY PRICE', 'GAIN%', 'SHARES', 'TODAY VALUE', 'DAYS_ON_MARKET', 'CUP LEN', 'HANDLE LEN', 'CUP DEPTH', 'HANDLE DEPTH', 'RRR'))
+        print_bag = "{:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<14} {:<10} {:<10} {:<10} {:<14} {:<10}".format('DATE', 'STOCK', 'BUY PRICE', 'TODAY PRICE', 'GAIN%', 'SHARES', 'TODAY VALUE', 'DAYS_ON_MARKET', 'CUP LEN', 'HANDLE LEN', 'CUP DEPTH', 'HANDLE DEPTH', 'RRR')
         today_stock_value = 0.0
         for key, value in self.buy_orders.items():       
             try:    
@@ -92,16 +95,21 @@ class simulator:
                 rrr = np.round(cup_depth / handle_depth, 2)
                 today_stock_value += value[1] * close_price
                 if(close_price >= value[0]):                
-                    print(f'{bcolors.OKGREEN}{str(date.date()):<10} {key:<10} {np.round(value[0], 2):<10} {np.round(close_price, 2):<10}  {np.round((close_price - value[0]) / value[0] * 100, 2):<10} {value[1]:<10} {np.round(close_price * value[1], 2):<10} {days_on_market:<14} {cup_len:<10} {handle_len:<10} {cup_depth:<10} {handle_depth:<14} {rrr:<10}{bcolors.ENDC}')
+                    print_bag += f'\n{bcolors.OKGREEN}{str(date.date()):<10} {key:<10} {np.round(value[0], 2):<10} {np.round(close_price, 2):<10}  {np.round((close_price - value[0]) / value[0] * 100, 2):<10} {value[1]:<10} {np.round(close_price * value[1], 2):<10} {days_on_market:<14} {cup_len:<10} {handle_len:<10} {cup_depth:<10} {handle_depth:<14} {rrr:<10}{bcolors.ENDC}'
                 else:
-                    print(f'{bcolors.FAIL}{str(date.date()):<10} {key:<10} {np.round(value[0], 2):<10} {np.round(close_price, 2):<10}  {np.round((close_price - value[0]) / value[0] * 100, 2):<10} {value[1]:<10} {np.round(close_price * value[1], 2):<10} {days_on_market:<14} {cup_len:<10} {handle_len:<10} {cup_depth:<10} {handle_depth:<14} {rrr:<10}{bcolors.ENDC}')                
+                    print_bag += f'\n{bcolors.FAIL}{str(date.date()):<10} {key:<10} {np.round(value[0], 2):<10} {np.round(close_price, 2):<10}  {np.round((close_price - value[0]) / value[0] * 100, 2):<10} {value[1]:<10} {np.round(close_price * value[1], 2):<10} {days_on_market:<14} {cup_len:<10} {handle_len:<10} {cup_depth:<10} {handle_depth:<14} {rrr:<10}{bcolors.ENDC}'
             except:
                 continue
 
         if self.capital + today_stock_value >= self.initial_capital:
-            print(f'{bcolors.OKGREEN}Today Capital: {np.round(self.capital + today_stock_value, 2)}{bcolors.ENDC}')
+            print_bag += f'\n{bcolors.OKGREEN}Today Capital: {np.round(self.capital + today_stock_value, 2)}{bcolors.ENDC}'
         else:
-            print(f'{bcolors.FAIL}Today Capital: {np.round(self.capital + today_stock_value, 2)}{bcolors.ENDC}')
+            print_bag += f'\n{bcolors.FAIL}Today Capital: {np.round(self.capital + today_stock_value, 2)}{bcolors.ENDC}'
+
+        if(date.day == 28):
+            self.log(print_bag, True)
+        else: 
+            self.log(print_bag, False)
 
     def create_summary(self, print_results = False):
         """
@@ -128,10 +136,28 @@ class simulator:
             rrr = cup_depth / handle_depth
             
             self.total_gain += net_gain
+            """
             self.history_df = self.history_df.append({'stock': stock, 'buy_price': buy_price, 'n_shares': n_shares, \
                 'sell_price': sell_price, 'net_gain': net_gain, 'gain_perc': gain_perc, 'buy_date': buy_date, \
                 'sell_date': sell_date, 'total_days_on_market': total_days_on_market, 'cup_len': cup_len, \
                 'handle_len': handle_len, 'cup_depth': cup_depth, 'handle_depth': handle_depth, 'rrr': rrr}, ignore_index = True)
+            """
+            self.history_df = pd.concat([self.history_df, pd.DataFrame({
+                'stock': [stock],
+                'buy_price': [buy_price],
+                'n_shares': [n_shares],
+                'sell_price': [sell_price],
+                'net_gain': [net_gain],
+                'gain_perc': [gain_perc],
+                'buy_date': [buy_date],
+                'sell_date': [sell_date],
+                'total_days_on_market': [total_days_on_market],
+                'cup_len': [cup_len],
+                'handle_len': [handle_len],
+                'cup_depth': [cup_depth],
+                'handle_depth': [handle_depth],
+                'rrr': [rrr]
+            })])
 
             if print_results:
                 print("{:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<12} {:<10}" \
@@ -144,9 +170,56 @@ class simulator:
         prints the summary of results
         """
         self.create_summary(print_results= True)
-        print('\n')
-        print(f'Initial Balance: {self.initial_capital:.2f}')
-        print(f'Final Balance: {(self.initial_capital + self.total_gain):.2f}')
-        print(f'Total Gain: {self.total_gain:.2f}')
-        print(f'P/L: {(self.total_gain / self.initial_capital) * 100:.2f} %')
-        print('\n')
+        summary = f"""
+Initial Balance: {self.initial_capital:.2f}
+Final Balance: {(self.initial_capital + self.total_gain):.2f}
+Total Gain: {self.total_gain:.2f}
+P/L: {(self.total_gain / self.initial_capital) * 100:.2f} %
+        """
+        self.log(summary)
+
+    def log(self, message, force_to_send_to_telegram = None):
+        print(message)
+        if self.send_to_telegram if force_to_send_to_telegram is None else force_to_send_to_telegram:
+            t = telegram()
+            message = message.replace(bcolors.HEADER, "")
+            message = message.replace(bcolors.OKBLUE, "")
+            message = message.replace(bcolors.OKCYAN, "")
+            message = message.replace(bcolors.OKGREEN, "")
+            message = message.replace(bcolors.WARNING, "")
+            message = message.replace(bcolors.FAIL, "")
+            message = message.replace(bcolors.ENDC, "")
+            message = message.replace(bcolors.BOLD, "")
+            message = message.replace(bcolors.UNDERLINE, "")
+            t.send_message(message=message)
+
+    def create_history_csv_header(self):
+         with open(os.path.join(self.folder_dir, 'history_df.csv'), 'a', newline='') as csv_file:
+            writer = csv.writer(csv_file)
+            writer.writerow(["STOCK", "BUY PRICE", "SHARES", "SELL PRICE", "NET GAIN", \
+                             "GAIN%", "BUY DATE", "SELL DATE", "TOTAL DAYS ON MARKET", \
+                                "CUP LEN", "HANDLE LEN", "CUP DEPTH", "HANDLE DEPTH", "RRR"])
+
+    def save_history(self, values):
+        stock = values[0]
+        buy_price = values[1]
+        n_shares = values[2]
+        sell_price = values[3]
+        buy_date = values[4]
+        sell_date = values[5]
+        cup_len = values[6]
+        handle_len = values[7]
+        cup_depth = values[8]
+        handle_depth = values[9]
+
+        net_gain = (sell_price - buy_price) * n_shares
+        gain_perc = np.round((sell_price - buy_price) / buy_price * 100, 2)
+        total_days_on_market = stock_utils.get_market_days(buy_date, sell_date)
+        rrr = cup_depth / handle_depth
+
+        row = [stock, buy_price, n_shares, sell_price, net_gain, gain_perc, buy_date, sell_date, total_days_on_market, \
+                cup_len, handle_len, cup_depth, handle_depth, rrr]
+
+        with open(os.path.join(self.folder_dir, 'history_df.csv'), 'a', newline='') as csv_file:
+            writer = csv.writer(csv_file)
+            writer.writerow(row)

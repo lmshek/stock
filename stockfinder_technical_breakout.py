@@ -18,7 +18,7 @@ import urllib.parse
 
 class stockfinder_technical_breakout:
 
-    def __init__(self, market, stocks_list, model, model_version, no_of_recommendations = 5):
+    def __init__(self, market, stocks_list, model, model_version, threshold, no_of_recommendations = 5):
         self.market = market
         self.stocks = stocks_list
         self.model = model
@@ -26,14 +26,17 @@ class stockfinder_technical_breakout:
         self.no_of_recommendations = no_of_recommendations
         self.day = datetime.today()
         self.stock_data = {}
+        self.earning_dates = {}
         self.days_before_start_date = 300
+        self.threshold = 0.04 if threshold is None else threshold
 
         # Get Stock Data             
         for ticker in self.stocks:
             try:
                 stock = yf.Ticker(ticker)
-                self.stock_data[ticker] = stock.history(start = stock_utils.get_market_real_date(self.market, self.day, -self.days_before_start_date), end = self.day + timedelta(days = 1), repair="silent", raise_errors=True, rounding=True)
-                #self.stock_data[ticker] = stock.history(period="max", repair="silent", raise_errors=True, rounding=True, keepna=True)
+                self.stock_data[ticker] = stock.history(start = stock_utils.get_market_real_date(self.market, self.day, -self.days_before_start_date), end = self.day + timedelta(days = 1), repair=True)
+                self.earning_dates[ticker] = stock.get_earnings_dates(limit=24)
+                #self.stock_data[ticker] = stock.history(period="max", repair=True, keepna=True)
             except Exception as e:
                 continue
 
@@ -173,7 +176,7 @@ class stockfinder_technical_breakout:
         #get start and end dates
         end = self.day
         start = stock_utils.get_market_real_date(self.market, end, -self.days_before_start_date)
-        buy_signal, close_price, today_stock_data, multiplier = self.model(self.stock_data[stock], start_date=start, end_date=end)
+        buy_signal, close_price, today_stock_data, multiplier = self.model(self.stock_data[stock], self.earning_dates[stock], self.threshold, start_date=start, end_date=end)
         return buy_signal, close_price, today_stock_data, multiplier
 
 
@@ -195,6 +198,7 @@ if __name__ == "__main__":
     # Add an argument to accept a list of strings
     parser.add_argument('--market', type=str, help='Country of the Market (e.g. HK, US)')
     parser.add_argument('--stock_list', nargs='+', help='List of the stocks (e.g. hsi_main, dow_jones, nasdaq_100)')
+    parser.add_argument('--threshold', type=float, help='Threshold for finding stock')
     
     # Parse the command-line arguments
     args = parser.parse_args()
@@ -202,6 +206,7 @@ if __name__ == "__main__":
     # Get the arguments
     market = (args.market).upper()
     stock_list = args.stock_list
+    threshold = args.threshold
 
     #Check if today is holiday
     market_holidays = getattr(holidays, market)()    
@@ -233,7 +238,7 @@ if __name__ == "__main__":
     stocks = list(np.unique(stocks)) 
 
     
-    sf = stockfinder_technical_breakout(market, stocks, breakout, 'v2', no_of_recommendations = 5)
+    sf = stockfinder_technical_breakout(market, stocks, breakout, 'v2', threshold = threshold, no_of_recommendations = 5)
     sf.scan_selling_signal()
     sf.scan_buying_signal()    
 

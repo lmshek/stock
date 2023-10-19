@@ -61,8 +61,8 @@ class backtester(simulator):
         for ticker in self.stocks:
             try:
                 stock = yf.Ticker(ticker)
-                self.stock_data[ticker] = stock.history(start = stock_utils.get_market_real_date(self.market, start_date, -self.days_before_start_date), end = end_date.date() + timedelta(days = 1), repair="silent", raise_errors=True, rounding=True)
-                #self.stock_data[ticker] = stock.history(period="max", repair="silent", raise_errors=True, rounding=True, keepna=True)
+                self.stock_data[ticker] = stock.history(start = stock_utils.get_market_real_date(self.market, start_date, -self.days_before_start_date), end = end_date.date() + timedelta(days = 1), repair=True)
+                #self.stock_data[ticker] = stock.history(period="max", repair=True, keepna=True)
             except Exception as e:
                 # Print the exception message
                 print("An exception occurred:", str(e))

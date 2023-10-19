@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "stockfinder_technical_breakout.py",
             "args": ["--market", "JP", 
-                "--stock_list", "nikkei_225"
+                "--stock_list", "nikkei_400"
                ],
             "console": "integratedTerminal",
             "justMyCode": false
@@ -20,13 +20,19 @@
             "type": "python",
             "request": "launch",
             "program": "backtester_technical_breakout.py",
-            "args": ["--market", "US", 
-                "--stock_list", "nasdaq_100", "dow_jones", 
+            "args": ["--market", "JP", 
+                "--stock_list", "nikkei_400", 
                 "--days_before_today_as_start", "1095",
-                "--days_before_today_as_end", "0",],
+                "--days_before_today_as_end", "0",
+                "--no_of_split", "3",
+                "--threshold", "0.035"
+                /*"--send_to_telegram", "False"*/
+            
+               ],
             "console": "integratedTerminal",
             "justMyCode": false
         },
+        
         {
             "name": "Back Test Trend",
             "type": "python",

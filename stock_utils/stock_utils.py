@@ -253,5 +253,16 @@ def get_market_days(start_date, end_date):
 
     return market_days
 
-    
+def next_earning_date(earning_dates, todays_date):
+    earnings_calendar = earning_dates.sort_values(by='Earnings Date')
+    today_date = todays_date.date()
+    for _, row in earnings_calendar.iterrows():
+        earnings_date = row.name.date()
+        if earnings_date >= today_date:
+            next_earnings_date = earnings_date
+            break
+    else:
+        next_earnings_date = None
+
+    return next_earnings_date
 

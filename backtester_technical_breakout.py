@@ -19,9 +19,10 @@ from stock_utils import stock_utils
 import traceback
 import argparse
 
+
 class backtester(simulator):
 
-    def __init__(self, market, stocks_list, model, model_version, capital, start_date, end_date, no_of_splits = 5):
+    def __init__(self, market, stocks_list, model, model_version, capital, start_date, end_date, no_of_splits, send_to_telegram, threshold):
 
         super().__init__(capital)
 
@@ -36,15 +37,22 @@ class backtester(simulator):
         self.end_date = end_date      
         self.no_of_splits_available = no_of_splits
         self.stock_data = {}
+        self.earning_dates = {}
         self.days_before_start_date = 400
+        self.send_to_telegram = False if send_to_telegram is None or not send_to_telegram else True
+        self.threshold = 0.04 if threshold is None else threshold
 
-        print('========== Back Test Data Parameters ============')
-        print(f'Market: {self.market}')
-        print(f'No. of stocks: {len(self.stocks)}')
-        print(f'Model: {self.model.__name__}_{self.model_version}')        
-        print(f'Start Date: {self.start_date.strftime("%Y-%m-%d")}')
-        print(f'End Date: {self.end_date.strftime("%Y-%m-%d")}')        
-        print(f'No of Splits: {self.no_of_splits_available}')
+        backtest_param_summary = f"""
+========== Back Test Data Parameters ============
+Market: {self.market}
+No. of stocks: {len(self.stocks)}
+Model: {self.model.__name__}_{self.model_version}
+Start Date: {self.start_date.strftime("%Y-%m-%d")}
+End Date: {self.end_date.strftime("%Y-%m-%d")}
+No of Splits: {self.no_of_splits_available}
+Threshold: {self.threshold}
+        """
+        self.log(backtest_param_summary)        
 
         #current directory
         current_dir = os.getcwd()
@@ -56,13 +64,21 @@ class backtester(simulator):
             # create a new folder
             os.makedirs(self.folder_dir)
 
+        # Create CSV Header
+        self.create_history_csv_header()
+
         # Get Stock Data     
         sbar = tqdm(desc = 'Downloading Stock Data', total = len(self.stocks))   
         for ticker in self.stocks:
             try:
                 stock = yf.Ticker(ticker)
-                self.stock_data[ticker] = stock.history(start = stock_utils.get_market_real_date(self.market, start_date, -self.days_before_start_date), end = end_date.date() + timedelta(days = 1), repair="silent", raise_errors=True, rounding=True)
-                #self.stock_data[ticker] = stock.history(period="max", repair="silent", raise_errors=True, rounding=True, keepna=True)
+                self.stock_data[ticker] = stock.history(start = stock_utils.get_market_real_date(self.market, start_date, -self.days_before_start_date), end = end_date.date() + timedelta(days = 1), repair=True)
+                self.earning_dates[ticker] = stock.get_earnings_dates(limit=12 + ((((datetime.now() - start_date).days // 365) - 2) * 4))
+                #self.stock_data[ticker] = stock.history(period="max", repair=True, keepna=True)
+
+                ## Remove TimeZone
+                self.stock_data[ticker] = self.stock_data[ticker].tz_localize(None)
+                self.earning_dates[ticker] = self.earning_dates[ticker].tz_localize(None)
             except Exception as e:
                 # Print the exception message
                 print("An exception occurred:", str(e))
@@ -95,11 +111,13 @@ class backtester(simulator):
                 #check if any stock should sell, or any stock hit the maturity date 
                 stocks = [key for key in self.buy_orders.keys()]
                 for s in stocks:
-                    recommended_action, current_price = breakout_sell(self.stock_data, self.market, s, self.buy_orders[s][3], self.buy_orders[s][0], self.day, self.buy_orders[s][4], self.buy_orders[s][5], self.buy_orders[s][6], self.buy_orders[s][7])
+                    recommended_action, current_price = breakout_sell(self.stock_data, self.market, s, self.buy_orders[s][3], self.buy_orders[s][0], self.day, self.buy_orders[s][4], self.buy_orders[s][4], self.buy_orders[s][6], self.buy_orders[s][7])
                     if "SELL" in recommended_action:
                         self.sell(s, current_price, self.buy_orders[s][1], self.day, self.buy_orders[s][0], recommended_action, self.buy_orders[s][4], self.buy_orders[s][5], self.buy_orders[s][6], self.buy_orders[s][7])
                         self.no_of_splits_available += 1
-                        print(f'{bcolors.HEADER}No. of splits available: {self.no_of_splits_available}{bcolors.ENDC}')
+                        self.log(f'{bcolors.HEADER}No. of splits available: {self.no_of_splits_available}{bcolors.ENDC}')
+                        # log in csv file
+                        self.save_history(self.history[-1])
                 
                 # if we still have avilable splits, then scan stocks to buy; Otherwise, go to next day
                 if self.no_of_splits_available > 0:                        
@@ -121,10 +139,10 @@ class backtester(simulator):
                                 breakout_buy(self, recommanded_stock, recommanded_price, self.day, self.no_of_splits_available, data['cup_len'][-1], data['handle_len'][-1], data['cup_depth'][-1], data['handle_depth'][-1]) # buy stock
                                 self.no_of_splits_available -= 1
                                 no_of_stock_buy_today += 1   
-                                breakout_print(data)                             
-                                print(f'{bcolors.HEADER}No. of splits available: {self.no_of_splits_available}{bcolors.ENDC}')
+                                breakout_print(self, data)                             
+                                self.log(f'{bcolors.HEADER}No. of splits available: {self.no_of_splits_available}{bcolors.ENDC}')
                             else:                    
-                                print(f'Missed {len(self.daily_scanner.items()) - 1} potential stocks on {self.day.strftime("%Y-%m-%d")}')                                
+                                self.log(f'Missed {len(self.daily_scanner.items()) - 1} potential stocks on {self.day.strftime("%Y-%m-%d")}')                                
                                 break                                
                     else:
                         print(f'No recommandations on {self.day.strftime("%Y-%m-%d")}')
@@ -155,7 +173,7 @@ class backtester(simulator):
         #get start and end dates
         end = self.day
         start = stock_utils.get_market_real_date(self.market, end, -self.days_before_start_date)
-        buy_signal, close_price, today_stock_data, multiplier = self.model(self.stock_data[stock], start_date=start, end_date=end)
+        buy_signal, close_price, today_stock_data, multiplier = self.model(self.stock_data[stock], self.earning_dates[stock], self.threshold, start_date=start, end_date=end)
         return buy_signal, close_price, today_stock_data, multiplier
 
     def scanner(self):
@@ -187,8 +205,8 @@ class backtester(simulator):
         save history dataframe create figures and save
         """           
         #save csv file
-        results_df_path = os.path.join(self.folder_dir, 'history_df.csv')
-        self.history_df.to_csv(results_df_path, index = False)
+        #results_df_path = os.path.join(self.folder_dir, 'history_df.csv')
+        #self.history_df.to_csv(results_df_path, index = False)
 
         #save params and results summary
         results_summary_txt_path = os.path.join(self.folder_dir, 'results_summary.txt')
@@ -225,8 +243,6 @@ class backtester(simulator):
             pickle.dump(params, fp)
      
 
-    
-      
 if __name__ == "__main__":
 
     # Get the arguments from command line
@@ -242,6 +258,8 @@ if __name__ == "__main__":
     parser.add_argument('--days_before_today_as_start', type=int, help='Backtest Days Before Today as Start Date')
     parser.add_argument('--days_before_today_as_end', type=int, help='Backtest Days Before Today as End Date')
     parser.add_argument('--no_of_split', type=int, help='Max Number of Holding Stock')
+    parser.add_argument('--threshold', type=float, help='Threshold for finding stock')
+    parser.add_argument('--send_to_telegram', type=bool, help='Send the interim message to telegram (True / False)')
 
     # Parse the command-line arguments
     args = parser.parse_args()
@@ -254,6 +272,8 @@ if __name__ == "__main__":
     days_before_today_as_start = args.days_before_today_as_start
     days_before_today_as_end = args.days_before_today_as_end
     no_of_split = args.no_of_split
+    send_to_telegram = args.send_to_telegram
+    threshold = args.threshold
    
     # get stock tickers symobols
     current_dir = os.getcwd()
@@ -263,7 +283,7 @@ if __name__ == "__main__":
         stocks = stocks + pd.read_csv(os.path.join(current_dir, f'stock_list/{stock_cat}.csv'))['tickers'].tolist()
     stocks = list(np.unique(stocks)) 
 
-    #stocks = ["ORLY"]
+    #stocks = ["5423.T", "6971.T"]
     #hsi_tech = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_tech.csv'))['tickers'].tolist()
     #hsi_main = pd.read_csv(os.path.join(current_dir, 'stock_list/hsi/hsi_main.csv'))['tickers'].tolist()
     #stocks = list(np.unique(hsi_tech + hsi_main))        
@@ -286,7 +306,7 @@ if __name__ == "__main__":
     """
     Back Test different parameters
     """  
-    backtester(market, stocks, breakout, 'v2', 1000000, start_date = start_date, end_date = end_date, no_of_splits=no_of_split).backtest()
+    backtester(market, stocks, breakout, 'v2', 1000000, start_date = start_date, end_date = end_date, no_of_splits=no_of_split, send_to_telegram = send_to_telegram, threshold = threshold).backtest()
 
 
 

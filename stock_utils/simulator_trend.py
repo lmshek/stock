@@ -129,9 +129,14 @@ class simulator_trend:
             total_days_on_market = stock_utils.get_market_days(buy_date, sell_date)
             
             self.total_gain += net_gain
+            """
             self.history_df = self.history_df.append({'stock': stock, 'buy_price': buy_price, 'n_shares': n_shares, \
                 'sell_price': sell_price, 'net_gain': net_gain, 'gain_perc': gain_perc, 'buy_date': buy_date, \
                 'sell_date': sell_date, 'total_days_on_market': total_days_on_market, 'wave_1_max': wave_1_max, 'slope': slope, 'wave_depth': wave_depth, 'wave_length': wave_length}, ignore_index = True)
+            """
+            self.history_df = pd.concat([self.history_df, {'stock': stock, 'buy_price': buy_price, 'n_shares': n_shares, \
+                'sell_price': sell_price, 'net_gain': net_gain, 'gain_perc': gain_perc, 'buy_date': buy_date, \
+                'sell_date': sell_date, 'total_days_on_market': total_days_on_market, 'wave_1_max': wave_1_max, 'slope': slope, 'wave_depth': wave_depth, 'wave_length': wave_length}])
 
             if print_results:
                 print("{:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10}" \

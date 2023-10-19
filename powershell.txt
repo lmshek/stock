@@ -1,0 +1,1 @@
+C:\Users\lmshek\AppData\Local\anaconda3\envs\stock\python.exe backtester_technical_breakout.py --market JP --stock_list nikkei_400 --days_before_today_as_start 1095 --days_before_today_as_end 0 --no_of_split 3 --send_to_telegram True

@@ -13,8 +13,10 @@ from stock_utils.bcolors import bcolors
 import math
 from pytz import timezone
 import traceback
+import pandas_ta as ta
+import yfinance as yf
 
-def breakout(all_time_stock_data, start_date = None, end_date = None):
+def breakout(all_time_stock_data, earning_dates, threshold, start_date = None, end_date = None):
     
     try:
 
@@ -42,10 +44,11 @@ def breakout(all_time_stock_data, start_date = None, end_date = None):
             if all_max_min.iloc[-1].Type == 'local_minima':
                 continue
 
-            grouped_max_min = pd.DataFrame({})            
+            grouped_max_min = pd.DataFrame({}, columns = all_max_min.columns)            
             for i in range(len(all_max_min)):
                 if grouped_max_min.empty:
-                    grouped_max_min = grouped_max_min.append(all_max_min.iloc[i])
+                    #grouped_max_min = grouped_max_min.append(all_max_min.iloc[i])
+                    grouped_max_min.loc[all_max_min.iloc[i].name] =  all_max_min.iloc[i]
                     grouped_max_min_counter = 0
                 else:
                     try:
@@ -57,17 +60,20 @@ def breakout(all_time_stock_data, start_date = None, end_date = None):
                             if grouped_max_min.iloc[grouped_max_min_counter].Type == 'local_maxima':
                                 # compare local_maxima
                                 if all_max_min.iloc[i].High >= grouped_max_min.iloc[grouped_max_min_counter].High:
-                                    grouped_max_min = grouped_max_min.drop(grouped_max_min.index[-1])
-                                    grouped_max_min = grouped_max_min.append(all_max_min.iloc[i].copy())
+                                    grouped_max_min = grouped_max_min.drop(grouped_max_min.index[-1])                                    
+                                    # grouped_max_min = grouped_max_min.append(all_max_min.iloc[i].copy())
+                                    grouped_max_min.loc[all_max_min.iloc[i].name] =  all_max_min.iloc[i]
 
                             else:
                                 # compare local_minima
                                 if all_max_min.iloc[i].Low <= grouped_max_min.iloc[grouped_max_min_counter].Low:
                                     grouped_max_min = grouped_max_min.drop(grouped_max_min.index[-1])
-                                    grouped_max_min = grouped_max_min.append(all_max_min.iloc[i].copy())
+                                    #grouped_max_min = grouped_max_min.append(all_max_min.iloc[i].copy())                                    
+                                    grouped_max_min.loc[all_max_min.iloc[i].name] =  all_max_min.iloc[i]
 
                         else:
-                            grouped_max_min = grouped_max_min.append(all_max_min.iloc[i].copy())
+                            #grouped_max_min = grouped_max_min.append(all_max_min.iloc[i].copy())
+                            grouped_max_min.loc[all_max_min.iloc[i].name] =  all_max_min.iloc[i]
                             grouped_max_min_counter += 1 
                     except Exception as e:
                         # Print the exception message
@@ -78,7 +84,7 @@ def breakout(all_time_stock_data, start_date = None, end_date = None):
                         raise e
 
             # if the last local_maxima is not within end_date - 5 days and the last item must be local_maxima, otherwise continue
-            if not(end_date.replace(tzinfo=timezone('Asia/Hong_Kong')) - grouped_max_min.index[-1]  <= timedelta(days=5)):
+            if not(end_date - grouped_max_min.index[-1]  <= timedelta(days=5)):
                 continue
 
             # Identify potential Cup and Handle patterns
@@ -102,26 +108,30 @@ def breakout(all_time_stock_data, start_date = None, end_date = None):
                 handle_depth = handle_left_high - handle_mid_low
 
                 cup_formed = cup_left_high > cup_mid_low and cup_mid_low < cup_right_high \
-                    and is_similar(cup_left_high, cup_right_high, threshold=0.04)
-                handle_formed = handle_depth > 0 and handle_depth <= cup_depth * 0.40 and (ts_handle_right - ts_handle_left).days < (ts_cup_right - ts_cup_left).days\
+                    and is_similar(cup_left_high, cup_right_high, threshold=0.05)
+                handle_formed = handle_depth > 0 and handle_depth <= cup_depth and (ts_handle_right - ts_handle_left).days < (ts_cup_right - ts_cup_left).days\
                     and handle_left_high > handle_mid_low and handle_mid_low < handle_right_high \
-                    and is_similar(handle_left_high, handle_right_high, threshold= 0.04) \
-                    and cup_depth / handle_depth <= 5.0
-                going_to_breakout = is_similar(cup_left_high, handle_right_high, threshold=0.04) and is_similar(handle_right_high, hist['Close'][-1], threshold=0.04)
+                    and is_similar(handle_left_high, handle_right_high, threshold= threshold) \
+                    and cup_depth / handle_depth <= 5.0 \
+                    and (ts_handle_right - ts_handle_left).days <= 100 # Don't want to hold the stock to long if it did not breakout
+                going_to_breakout = is_similar(cup_left_high, handle_right_high, threshold=threshold) and is_similar(handle_right_high, hist['Close'][-1], threshold=threshold)
 
 
-                vol_increase = hist['Volume'][-2] <= hist['Volume'][-1]
-                price_condition = hist['Close'][-1] > hist['Open'][-1] and is_similar(hist['Close'][-1], handle_right_high, threshold=0.04)
+                #vol_increase = hist['Volume'][-2] <= hist['Volume'][-1]
+                vol_increase = True 
+                price_condition = hist['Close'][-2] >= hist['Open'][-2] and hist['Close'][-1] >= hist['Open'][-1]                
 
-                potential_cup_and_handle = cup_formed & handle_formed & going_to_breakout & vol_increase & price_condition
+                is_earning_date_coming = (stock_utils.next_earning_date(earning_dates, end_date) - end_date.date()).days <= 10
 
-                if potential_cup_and_handle and target_cup_depth < cup_depth / hist['Close'][-1]: #and handle_depth / hist['Close'][-1] >= 0.04:
+                potential_cup_and_handle = cup_formed & handle_formed & going_to_breakout & vol_increase & price_condition & (not is_earning_date_coming)
+
+                if potential_cup_and_handle and target_cup_depth < cup_depth / hist['Close'][-1]: #and handle_depth / hist['Close'][-1] >= threshold:
                     hist['cup_len'] = (ts_cup_right - ts_cup_left).days
                     hist['handle_len'] = (ts_handle_right - ts_handle_left).days
                     hist['cup_depth'] = cup_depth / hist['Close']
                     hist['handle_depth'] = handle_depth / hist['Close']                
 
-                    #target_cup_depth = cup_depth / hist['Close'][-1]
+                    target_cup_depth = cup_depth / hist['Close'][-1]
                     return 1, hist['Close'].values[-1], hist.tail(1), 1
         
         
@@ -136,13 +146,14 @@ def breakout(all_time_stock_data, start_date = None, end_date = None):
 
 def take_first(elem):
     return elem[1][1]['cup_depth'][0] / elem[1][1]['handle_depth'][0] # Risk Reward Ratio
+    #return elem[1][1]['cup_depth'][0]  # Cup Depth
 
 def breakout_order(stocks):
     return OrderedDict(sorted(stocks, key = take_first, reverse = True))
 
-def breakout_print(today_data):
-    print(f'{bcolors.OKCYAN}Cup Depth: {today_data["cup_depth"][-1]}, Handle Depth: {today_data["handle_depth"][-1]}{bcolors.ENDC}')
-    print(f'{bcolors.OKCYAN}Cup Length: {today_data["cup_len"][-1]}, Handle Length: {today_data["handle_len"][-1]}{bcolors.ENDC}')
+def breakout_print(simulator, today_data):
+    simulator.log(f'{bcolors.OKCYAN}Cup Depth: {today_data["cup_depth"][-1]}, Handle Depth: {today_data["handle_depth"][-1]}{bcolors.ENDC}')
+    simulator.log(f'{bcolors.OKCYAN}Cup Length: {today_data["cup_len"][-1]}, Handle Length: {today_data["handle_len"][-1]}{bcolors.ENDC}')
 
 def breakout_buy(simulator, stock, buy_price, buy_date, no_of_splits, cup_len, handle_len, cup_depth, handle_depth):
         """
@@ -155,7 +166,7 @@ def breakout_buy(simulator, stock, buy_price, buy_date, no_of_splits, cup_len, h
         simulator.buy_orders[stock] = [buy_price, n_shares, buy_price * n_shares, buy_date, cup_len, handle_len, cup_depth, handle_depth]
 
 
-        print(f'{bcolors.OKCYAN}Bought {stock} for {buy_price} with risk reward ratio {cup_depth / handle_depth} on the {buy_date.strftime("%Y-%m-%d")} . Account Balance: {simulator.capital}{bcolors.ENDC}')
+        simulator.log(f'{bcolors.OKCYAN}Bought {stock} for {buy_price} with risk reward ratio {cup_depth / handle_depth} on the {buy_date.strftime("%Y-%m-%d")} . Account Balance: {simulator.capital}{bcolors.ENDC}')
 
 def breakout_sell(stock_data, market, ticker, buy_date, buy_price, todays_date, cup_len, handle_len, cup_depth, handle_depth):
     try :
@@ -165,23 +176,44 @@ def breakout_sell(stock_data, market, ticker, buy_date, buy_price, todays_date, 
         sell_price = buy_price + buy_price * cup_depth
         stop_price = buy_price - buy_price * handle_depth
         sell_date = stock_utils.get_market_real_date(market, buy_date, handle_len) # selling date        
-        time.sleep(1) #to make sure the requested transactions per seconds is not exceeded
+        #time.sleep(1) #to make sure the requested transactions per seconds is not exceeded
 
-        if (current_price is not None):
-            if (current_price < stop_price):
-                return "SELL:stop_loss", current_price #if criteria is met recommend to sell
-            elif (current_price >=  buy_price * (1 + cup_depth * 2 / 3)):
-                return "SELL:take_profit", current_price #if criteria is met recommend to sell
-            elif (current_price >= buy_price * (1 + cup_depth / 2) and stock_utils.get_market_days(buy_date, todays_date) <= handle_len / 3):
-                return "SELL:take_profit_in_early_phase_one_third", current_price #if criteria is met recommend to sell
-            #elif (current_price >= buy_price * (1.1) and stock_utils.get_market_days(buy_date, todays_date) <= handle_len / 5):
-            #    return "SELL:take_profit_in_early_phase_one_fifth", current_price #if criteria is met recommend to sell
-            elif (current_price <= buy_price * (1 + cup_depth / 4) and stock_utils.get_market_days(buy_date, todays_date) >= handle_len / 2):
-                return "SELL:did_not_breakout_within_half_handle", current_price #if criteria is met recommend to sell
-            elif (todays_date >= sell_date ):
-                return "SELL:already_matured", current_price #if criteria is met recommend to sell
+        bbands = hist.ta.bbands(close=hist['Close'], length=20)
+        hist['BBL_20_2.0'] = bbands['BBL_20_2.0']
+        hist['BBM_20_2.0'] = bbands['BBM_20_2.0']
+        hist['BBU_20_2.0'] = bbands['BBU_20_2.0']
+        hist['BBB_20_2.0'] = bbands['BBB_20_2.0']
+        hist['BBP_20_2.0'] = bbands['BBP_20_2.0']
+
+        bbl = hist['BBL_20_2.0'][stock_utils.get_market_real_date(market, todays_date, -2).date():todays_date.date()]
+        bbm = hist['BBM_20_2.0'][stock_utils.get_market_real_date(market, todays_date, -2).date():todays_date.date()]
+        close = hist['Close'][stock_utils.get_market_real_date(market, todays_date, -2).date():todays_date.date()]
+
+        #next_earning_date = stock_utils.next_earning_date(ticker, todays_date)
+        
+        if current_price is not None:
+            if current_price >= buy_price:
+                ##### Make Profit Strategy ####
+                if close[0] < bbm[0] and close[1] < bbm[1] and close[2] < bbm[2] and close[1] > close [2]:
+                    return "SELL:3_consecutive_day_below_BBM", current_price #if criteria is met recommend to sell
+                elif close[2] < bbl[2]:
+                    return "SELL:below_BBL", current_price #if criteria is met recommend to sell
+                #elif stock_utils.get_market_days(todays_date.date(), next_earning_date) == 1:
+                #    return "SELL:earning_date_next_market_day", current_price #if criteria is met recommend to sell            
+                else:
+                    return "HOLD", current_price #if criteria is not met hold the stock
             else:
-                return "HOLD", current_price #if criteria is not met hold the stock
+                #### Stop Loss Strategy ####
+                if (current_price < stop_price):
+                    return "SELL:stop_loss", current_price #if criteria is met recommend to sell
+                elif (current_price <= buy_price * (1 + cup_depth / 4) and stock_utils.get_market_days(buy_date, todays_date) >= handle_len / 2):
+                    return "SELL:did_not_breakout_within_half_handle", current_price #if criteria is met recommend to sell
+                elif (todays_date >= sell_date ):
+                    return "SELL:already_matured", current_price #if criteria is met recommend to sell
+                elif close[2] < bbl[2] and close[1] < bbl[1]:
+                    return "SELL:2_consecutive_day_below_BBL", current_price #if criteria is met recommend to sell
+                else:
+                    return "HOLD", current_price #if criteria is not met hold the stock
         else:
             return "HOLD", current_price #if criteria is not met hold the stock
     except:
