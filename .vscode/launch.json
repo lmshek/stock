@@ -10,7 +10,8 @@
             "request": "launch",
             "program": "stockfinder_technical_breakout.py",
             "args": ["--market", "JP", 
-                "--stock_list", "nikkei_400"
+                "--stock_list", "nikkei_400",
+                "--threshold", "0.05"
                ],
             "console": "integratedTerminal",
             "justMyCode": false
@@ -25,7 +26,7 @@
                 "--days_before_today_as_start", "1095",
                 "--days_before_today_as_end", "0",
                 "--no_of_split", "3",
-                "--threshold", "0.035"
+                "--threshold", "0.05"
                 /*"--send_to_telegram", "False"*/
             
                ],
