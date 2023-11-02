@@ -31,7 +31,6 @@
                 "--min_threshold", "0.00",
                 "--max_threshold", "0.08"
                 /*"--send_to_telegram", "False"*/
-            
                ],
             "console": "integratedTerminal",
             "justMyCode": false
@@ -50,8 +49,8 @@
                 "--days_before_today_as_end", "0",
                 "--profit_perc", "0.1",
                 "--stop_perc", "0.05",
-                "--hold_till", "10",
-                "--send_to_telegram", "False"
+                "--hold_till", "10"
+                /*"--send_to_telegram", "True"*/
             ],
             "console": "integratedTerminal",
             "justMyCode": false
