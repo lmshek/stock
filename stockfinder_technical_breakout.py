@@ -18,7 +18,7 @@ import urllib.parse
 
 class stockfinder_technical_breakout:
 
-    def __init__(self, market, stocks_list, model, model_version, threshold, no_of_recommendations = 5):
+    def __init__(self, market, stocks_list, model, model_version, min_threshold, max_threshold, no_of_recommendations = 5):
         self.market = market
         self.stocks = stocks_list
         self.model = model
@@ -27,8 +27,13 @@ class stockfinder_technical_breakout:
         self.day = datetime.today()
         self.stock_data = {}
         self.earning_dates = {}
+        self.benchmark_data = {}
         self.days_before_start_date = 300
-        self.threshold = 0.04 if threshold is None else threshold
+        self.min_threshold = 0.02 if min_threshold is None else min_threshold
+        self.max_threshold = 0.05 if max_threshold is None else max_threshold
+
+        # Get Benchmark Index
+        self.get_benchmark_data()
 
         # Get Stock Data             
         for ticker in self.stocks:
@@ -83,6 +88,7 @@ class stockfinder_technical_breakout:
                     + f"Handle Length: {inventory['handle_len']} \n" \
                     + f"Cup Depth: {inventory['cup_depth']} \n" \
                     + f"Handle Depth: {inventory['handle_depth']} \n" \
+                    + f"Threshold: {inventory['threshold']} \n" \
                     + f"Risk Reward Ratio: {round(inventory['cup_depth'] / inventory['handle_depth'] * 100, 2)} \n" \
                     + f"G/L: ${round(current_price - inventory['buy_price'], 2)} ({round((current_price - inventory['buy_price']) / inventory['buy_price'] * 100, 2)}%) \n" \
                     
@@ -122,6 +128,7 @@ class stockfinder_technical_breakout:
                 handle_len = data['handle_len'][-1]
                 cup_depth = data['cup_depth'][-1]
                 handle_depth = data['handle_depth'][-1]
+                threshold = data['threshold'][-1]
 
                 
                 today = date.today()      
@@ -163,6 +170,7 @@ class stockfinder_technical_breakout:
                     + f"Cup Depth: {round(cup_depth, 5)}\n" \
                     + f"Handle Depth: {round(handle_depth, 5)}\n" \
                     + f"Risk Reward Ratio: {round((cup_depth / handle_depth) * 100, 2)} \n" \
+                    + f"Threshold: {threshold} \n" \
                     + f"Hold till: {(hold_till).strftime('%Y-%m-%d')} ({handle_len} days)\n" 
 
                 t.send_message(message)
@@ -176,8 +184,48 @@ class stockfinder_technical_breakout:
         #get start and end dates
         end = self.day
         start = stock_utils.get_market_real_date(self.market, end, -self.days_before_start_date)
-        buy_signal, close_price, today_stock_data, multiplier = self.model(self.stock_data[stock], self.earning_dates[stock], self.threshold, start_date=start, end_date=end)
+        buy_signal, close_price, today_stock_data, multiplier = self.model(self.stock_data[stock], self.earning_dates[stock], self.benchmark_data.loc[str(self.day.date())]['threshold'], start_date=start, end_date=end)
         return buy_signal, close_price, today_stock_data, multiplier
+    
+    def get_benchmark_data(self):
+        """
+        get benchmark data
+        """
+        if self.market == 'JP':
+            benchmark_ticker = '^N225'
+        elif self.market == 'HK':
+            benchmark_ticker = '^HSI'
+        else: 
+            benchmark_ticker = '^SPX'
+
+        benchmark = yf.Ticker(benchmark_ticker)
+        #get start and end dates
+        end = self.day
+        start = stock_utils.get_market_real_date(self.market, end, -self.days_before_start_date)
+        self.benchmark_data = benchmark.history(start = start, end = end + timedelta(days = 1), repair=True)
+
+        min_threshold = self.min_threshold
+        #mid_threshold = (self.max_threshold + self.min_threshold) / 2
+        max_threshold = self.max_threshold
+        sma100 = self.benchmark_data.ta.sma(length=100)
+        #bbands = self.benchmark_data.ta.bbands(close=self.benchmark_data['Close'], length=20)
+
+        conditions = [
+            sma100 > self.benchmark_data['Close'],
+            sma100 <= self.benchmark_data['Close']
+        ]
+
+        values = [
+            min_threshold,
+            max_threshold
+        ]
+
+        self.benchmark_data['threshold'] = np.select(conditions, values, default=max_threshold)
+        
+        ## Remove TimeZone
+        self.benchmark_data = self.benchmark_data.tz_localize(None)
+
+
 
 
 if __name__ == "__main__":
@@ -198,7 +246,8 @@ if __name__ == "__main__":
     # Add an argument to accept a list of strings
     parser.add_argument('--market', type=str, help='Country of the Market (e.g. HK, US)')
     parser.add_argument('--stock_list', nargs='+', help='List of the stocks (e.g. hsi_main, dow_jones, nasdaq_100)')
-    parser.add_argument('--threshold', type=float, help='Threshold for finding stock')
+    parser.add_argument('--min_threshold', type=float, help='Min Threshold for finding stock')
+    parser.add_argument('--max_threshold', type=float, help='Max Threshold for finding stock')
     
     # Parse the command-line arguments
     args = parser.parse_args()
@@ -206,7 +255,8 @@ if __name__ == "__main__":
     # Get the arguments
     market = (args.market).upper()
     stock_list = args.stock_list
-    threshold = args.threshold
+    min_threshold = args.min_threshold
+    max_threshold = args.max_threshold
 
     #Check if today is holiday
     market_holidays = getattr(holidays, market)()    
@@ -238,7 +288,7 @@ if __name__ == "__main__":
     stocks = list(np.unique(stocks)) 
 
     
-    sf = stockfinder_technical_breakout(market, stocks, breakout, 'v2', threshold = threshold, no_of_recommendations = 5)
+    sf = stockfinder_technical_breakout(market, stocks, breakout, 'v2', min_threshold = min_threshold, max_threshold = max_threshold, no_of_recommendations = 5)
     sf.scan_selling_signal()
     sf.scan_buying_signal()    
 

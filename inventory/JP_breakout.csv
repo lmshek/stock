@@ -1,1 +1,1 @@
-ticker, buy_date, buy_price, hold_till, sold_date, sold_price, cup_len, handle_len, cup_depth, handle_depth
+ticker, buy_date, buy_price, hold_till, sold_date, sold_price, cup_len, handle_len, cup_depth, handle_depth, threshold

@@ -1,0 +1,12 @@
+============== PARAMS ==============
+Market: JP
+No. of stocks: 398
+Model: breakout_v2 
+Start Date: 2020-10-25 10:58:32.475657 
+End Date: 2023-10-25 10:58:32.475657 
+
+============== Result Summary ==============
+Initial Balance: 1000000.00 
+Final Balance: 1186135.83 
+Total Gain: 186135.83 
+P/L: 18.61 % 

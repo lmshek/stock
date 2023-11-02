@@ -10,7 +10,9 @@
             "request": "launch",
             "program": "stockfinder_technical_breakout.py",
             "args": ["--market", "JP", 
-                "--stock_list", "nikkei_400"
+                "--stock_list", "nikkei_400",
+                "--min_threshold", "0.02",
+                "--max_threshold", "0.05"
                ],
             "console": "integratedTerminal",
             "justMyCode": false
@@ -20,12 +22,14 @@
             "type": "python",
             "request": "launch",
             "program": "backtester_technical_breakout.py",
-            "args": ["--market", "JP", 
+            "args": [ 
+                "--market", "JP", 
                 "--stock_list", "nikkei_400", 
                 "--days_before_today_as_start", "1095",
-                "--days_before_today_as_end", "0",
+                "--days_before_today_as_end", "1060",
                 "--no_of_split", "3",
-                "--threshold", "0.035"
+                "--min_threshold", "0.00",
+                "--max_threshold", "0.08"
                 /*"--send_to_telegram", "False"*/
             
                ],
@@ -34,14 +38,21 @@
         },
         
         {
-            "name": "Back Test Trend",
+            "name": "Back Test Stoch V2",
             "type": "python",
             "request": "launch",
-            "program": "backtester_technical_trend.py",
-            "args": ["--market", "JP", 
-                "--stock_list", "nikkei_225",
+            "program": "backtester_technical_stoch.py",
+            "args": [
+                "--capital", "2270000",
+                "--market", "JP", 
+                "--stock_list", "nikkei_400",
                 "--days_before_today_as_start", "1095",
-                "--days_before_today_as_end", "0",],
+                "--days_before_today_as_end", "0",
+                "--profit_perc", "0.1",
+                "--stop_perc", "0.05",
+                "--hold_till", "10",
+                "--send_to_telegram", "False"
+            ],
             "console": "integratedTerminal",
             "justMyCode": false
         }

@@ -1,0 +1,12 @@
+============== PARAMS ==============
+Market: HK
+No. of stocks: 323
+Model: stoch_k_d_v2 
+Start Date: 2013-11-03 09:39:20.633768 
+End Date: 2023-11-01 09:39:20.633768 
+
+============== Result Summary ==============
+Initial Balance: 1000000.00 
+Final Balance: 1025409.71 
+Total Gain: 25409.71 
+P/L: 2.54 % 

@@ -6,7 +6,6 @@ from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime, timedelta
 import time
 import pandas_datareader as web
-import pandas_ta as ta
 from collections import OrderedDict
 from stock_utils import stock_utils
 from stock_utils.bcolors import bcolors
@@ -119,7 +118,7 @@ def breakout(all_time_stock_data, earning_dates, threshold, start_date = None, e
 
                 #vol_increase = hist['Volume'][-2] <= hist['Volume'][-1]
                 vol_increase = True 
-                price_condition = hist['Close'][-2] >= hist['Open'][-2] and hist['Close'][-1] >= hist['Open'][-1]                
+                price_condition = True #hist['Close'][-2] >= hist['Open'][-2] and hist['Close'][-1] >= hist['Open'][-1]                
 
                 is_earning_date_coming = (stock_utils.next_earning_date(earning_dates, end_date) - end_date.date()).days <= 10
 
@@ -129,7 +128,8 @@ def breakout(all_time_stock_data, earning_dates, threshold, start_date = None, e
                     hist['cup_len'] = (ts_cup_right - ts_cup_left).days
                     hist['handle_len'] = (ts_handle_right - ts_handle_left).days
                     hist['cup_depth'] = cup_depth / hist['Close']
-                    hist['handle_depth'] = handle_depth / hist['Close']                
+                    hist['handle_depth'] = handle_depth / hist['Close'] 
+                    hist['threshold'] = threshold
 
                     target_cup_depth = cup_depth / hist['Close'][-1]
                     return 1, hist['Close'].values[-1], hist.tail(1), 1
@@ -154,16 +154,17 @@ def breakout_order(stocks):
 def breakout_print(simulator, today_data):
     simulator.log(f'{bcolors.OKCYAN}Cup Depth: {today_data["cup_depth"][-1]}, Handle Depth: {today_data["handle_depth"][-1]}{bcolors.ENDC}')
     simulator.log(f'{bcolors.OKCYAN}Cup Length: {today_data["cup_len"][-1]}, Handle Length: {today_data["handle_len"][-1]}{bcolors.ENDC}')
+    simulator.log(f'{bcolors.OKCYAN}Threshold: {today_data["threshold"][-1]}{bcolors.ENDC}')
 
-def breakout_buy(simulator, stock, buy_price, buy_date, no_of_splits, cup_len, handle_len, cup_depth, handle_depth):
+def breakout_buy(simulator, stock, buy_price, buy_date, no_of_splits, cup_len, handle_len, cup_depth, handle_depth, threshold):
         """
         function takes buy price and the number of shares and buy the stock
         """
 
         #calculate the procedure
         n_shares = simulator.buy_percentage(buy_price, 1/no_of_splits)
-        simulator.capital = simulator.capital - buy_price * n_shares
-        simulator.buy_orders[stock] = [buy_price, n_shares, buy_price * n_shares, buy_date, cup_len, handle_len, cup_depth, handle_depth]
+        simulator.capital = simulator.capital - buy_price * n_shares 
+        simulator.buy_orders[stock] = [buy_price, n_shares, buy_price * n_shares, buy_date, cup_len, handle_len, cup_depth, handle_depth, threshold]
 
 
         simulator.log(f'{bcolors.OKCYAN}Bought {stock} for {buy_price} with risk reward ratio {cup_depth / handle_depth} on the {buy_date.strftime("%Y-%m-%d")} . Account Balance: {simulator.capital}{bcolors.ENDC}')
@@ -231,11 +232,3 @@ def is_similar(num1, num2, threshold=0.05):
     
     # Compare the percentage difference with the threshold
     return perc_diff <= threshold
-
-def buy_percentage(self, buy_price, buy_perc = 1):
-    """
-    this function determines how much capital to spend on the stock and returns the number of shares
-    """
-    stock_expenditure = self.capital * buy_perc
-    n_shares = math.floor(stock_expenditure / buy_price)
-    return n_shares
