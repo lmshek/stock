@@ -122,12 +122,13 @@ Hold Till: {self.hold_till}
                     recommended_action, current_price = stoch_sell(self.stock_data, self.market, s, self.buy_orders[s][3], self.buy_orders[s][0], self.day, self.profit_perc, self.hold_till, self.stop_perc)
                     if "SELL" in recommended_action:
                         self.sell(s, current_price, self.buy_orders[s][1], self.day, self.buy_orders[s][0], recommended_action, self.buy_orders[s][4], self.buy_orders[s][5], self.buy_orders[s][6])
-                        #self.log(f'{bcolors.HEADER}No. of splits available: {self.no_of_splits_available}{bcolors.ENDC}')
+                        self.no_of_splits_available += 1
+                        self.log(f'{bcolors.HEADER}No. of splits available: {self.no_of_splits_available}{bcolors.ENDC}')
                         # log in csv file
                         self.save_history(self.history[-1])
                 
-                # if buying power > 0
-                if self.buying_power > 0:                        
+                # if no_of_splits_available power > 0
+                if self.no_of_splits_available > 0:                        
                     #daily scanner dict
                     self.daily_scanner = {}
                     #scan potential stocks for the day                    
@@ -148,6 +149,8 @@ Hold Till: {self.hold_till}
                                 successfully_bought = self.buy(recommanded_stock, recommanded_price, self.day, self.no_of_splits_available, data['STOCHk'][-1], data['STOCHd'][-1], data['potential'][-1]) # buy stock                                
                                 if successfully_bought:
                                     no_of_stock_buy_today += 1   
+                                    self.no_of_splits_available -= 1
+                                    self.log(f'{bcolors.HEADER}No. of splits available: {self.no_of_splits_available}{bcolors.ENDC}')
                                     #stoch_print(self, data)        
                             else:                    
                                 self.log(f'Missed {len(self.daily_scanner.items()) - 1} potential stocks on {self.day.strftime("%Y-%m-%d")}')                                

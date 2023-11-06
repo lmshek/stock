@@ -45,12 +45,29 @@
                 "--capital", "2270000",
                 "--market", "JP", 
                 "--stock_list", "nikkei_400",
-                "--days_before_today_as_start", "1095",
+                "--days_before_today_as_start", "2555",
                 "--days_before_today_as_end", "0",
                 "--profit_perc", "0.1",
                 "--stop_perc", "0.05",
-                "--hold_till", "10"
-                /*"--send_to_telegram", "True"*/
+                "--hold_till", "10",
+                "--send_to_telegram", "True"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+
+        {
+            "name": "Stock Finder Stoch V2",
+            "type": "python",
+            "request": "launch",
+            "program": "stockfinder_technical_stoch.py",
+            "args": [                
+                "--market", "JP", 
+                "--stock_list", "nikkei_400",
+                "--profit_perc", "0.1",
+                "--stop_perc", "0.05",
+                "--hold_till", "10",
+                "--no_of_splits", "5"
             ],
             "console": "integratedTerminal",
             "justMyCode": false

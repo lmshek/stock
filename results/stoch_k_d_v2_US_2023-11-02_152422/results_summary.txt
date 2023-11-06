@@ -1,0 +1,12 @@
+============== PARAMS ==============
+Market: US
+No. of stocks: 522
+Model: stoch_k_d_v2 
+Start Date: 2013-11-04 15:24:22.705917 
+End Date: 2023-11-02 15:24:22.705917 
+
+============== Result Summary ==============
+Initial Balance: 1000000.00 
+Final Balance: 2506598.24 
+Total Gain: 1506598.24 
+P/L: 150.66 % 

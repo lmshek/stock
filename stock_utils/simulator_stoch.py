@@ -85,9 +85,9 @@ class simulator_stoch:
                     break
         
         if consecutive_win > 0:
-            stock_expenditure = self.buying_power * buy_perc * (1 + min(consecutive_win, 5) / 5)
+            stock_expenditure = self.buying_power * buy_perc * min(3, consecutive_win)
         elif consecutive_lose > 0:
-            stock_expenditure = self.buying_power * buy_perc * (1 - min(consecutive_lose, 5) / 5)
+            stock_expenditure = self.buying_power * buy_perc * max(1/3, (4 - consecutive_lose)/3)
         else:
             stock_expenditure = self.buying_power * buy_perc
 
@@ -96,10 +96,11 @@ class simulator_stoch:
         else:
             n_shares = math.floor(stock_expenditure / buy_price)
 
+        ## To maximize the position to 100 if less than 100
         if n_shares < 100 and 100 * buy_price < self.buying_power:
             n_shares = 100
 
-        ## To maximize the position
+        ## To maximize the position to next hand amount
         if n_shares > 100 and int(math.ceil(n_shares / 100) * 100) * buy_price < self.buying_power:
             n_shares = int(math.ceil(n_shares / 100) * 100)
         

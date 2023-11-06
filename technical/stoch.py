@@ -97,6 +97,8 @@ def stoch_sell(stock_data, market, ticker, buy_date, buy_price, todays_date, pro
             else:
                 if (current_price < stop_price):
                     return "SELL:stop_loss", current_price #if criteria is met recommend to sell
+                elif (todays_date >= sell_date):
+                    return 'SELL:stop_loss_and_already_matured', current_price # already matured
                 else:
                     return "HOLD", current_price #if criteria is not met hold the stock
         else:

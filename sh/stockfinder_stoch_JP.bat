@@ -1,0 +1,2 @@
+cd C:\Users\lmshek\Documents\GithubExternal\stock\
+C:\Users\lmshek\AppData\Local\anaconda3\envs\stock\python.exe stockfinder_technical_stoch.py --market JP --stock_list nikkei_400 --profit_perc 0.1 --stop_perc 0.05 --hold_till 10 --no_of_splits 5
