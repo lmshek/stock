@@ -146,6 +146,9 @@ Hold Till: {self.hold_till}
                             if recommanded_stock in self.buy_orders: # if we have already bought the stock, we will not buy it again.
                                 continue
                             if no_of_stock_buy_today == 0: # we only buy 1 stock in 1 day
+                                # Skip the data error stock
+                                if recommanded_price <= 0:
+                                    continue
                                 successfully_bought = self.buy(recommanded_stock, recommanded_price, self.day, self.no_of_splits_available, data['STOCHk'][-1], data['STOCHd'][-1], data['potential'][-1]) # buy stock                                
                                 if successfully_bought:
                                     no_of_stock_buy_today += 1   

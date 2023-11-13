@@ -79,19 +79,19 @@ def stoch_sell(stock_data, market, ticker, buy_date, buy_price, todays_date, pro
 
         if (current_price is not None):
             if current_price > buy_price:
-                if (stoch_d > stoch_k \
-                    #and stoch_d_day_minus_2 - stoch_k_day_minus_2 < stoch_d_day_minus_1 - stoch_k_day_minus_1 \
-                    #and stoch_d_day_minus_1 - stoch_k_day_minus_1 < stoch_d - stoch_k \
-                ):
-                    return "SELL:turning_point", current_price #if criteria is met recommend to sell
-                elif (current_price < stop_price):
-                    return "SELL:stop_loss", current_price #if criteria is met recommend to sell
-                elif (current_price >= sell_price):
-                    return "SELL:take_profit", current_price #if criteria is met recommend to sell
-                elif (current_price >= buy_price * (1 + profit_perc * 0.8)  and stock_utils.get_market_days(buy_date, todays_date) <= hold_till / 2):
-                    return "SELL:take_profit_at_0.8_more_than_half_of_the_journey", current_price #if criteria is met recommend to sell
-                elif (todays_date >= sell_date and (stoch_d_day_minus_1 > stoch_k_day_minus_1) and (stoch_k > stoch_d)):
-                    return "SELL:already_matured_and_turning_point", current_price #if criteria is met recommend to sell
+                if(stoch_d < 75):
+                    if stoch_d > stoch_k:                                           
+                        return "SELL:turning_point", current_price #if criteria is met recommend to sell
+                    elif (current_price < stop_price):
+                        return "SELL:stop_loss", current_price #if criteria is met recommend to sell
+                    elif (current_price >= sell_price):
+                        return "SELL:take_profit", current_price #if criteria is met recommend to sell
+                    elif (current_price >= buy_price * (1 + profit_perc * 0.8)  and stock_utils.get_market_days(buy_date, todays_date) <= hold_till / 2):
+                        return "SELL:take_profit_at_0.8_more_than_half_of_the_journey", current_price #if criteria is met recommend to sell
+                    elif (todays_date >= sell_date and (stoch_d_day_minus_1 > stoch_k_day_minus_1) and (stoch_k > stoch_d)):
+                        return "SELL:already_matured_and_turning_point", current_price #if criteria is met recommend to sell
+                    else:
+                        return "HOLD", current_price #if criteria is not met hold the stock
                 else:
                     return "HOLD", current_price #if criteria is not met hold the stock
             else:

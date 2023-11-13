@@ -59,7 +59,7 @@ class stockfinder_technical_breakout:
         t = telegram()
 
         for index, inventory in inventories.iterrows():            
-            recommended_action, current_price = stoch_sell(self.stock_data[inventory['Ticker']], self.market, inventory['Ticker'], inventory['Buy Date'], inventory['Buy Price'], self.day, self.profit_perc, self.hold_till, self.stop_perc)
+            recommended_action, current_price = stoch_sell(self.stock_data, self.market, inventory['Ticker'], inventory['Buy Date'], inventory['Buy Price'], self.day, self.profit_perc, self.hold_till, self.stop_perc)
             if "SELL" in recommended_action:
                 currency = ''
                 link = ''
@@ -84,7 +84,7 @@ class stockfinder_technical_breakout:
                     link = f"https://www.tradingview.com/chart/dPvcvEPT/?symbol=SGX%3A{sg_stock}"
 
                 message = f"<u><b>SELL {self.market} STOCK</b></u>\n" \
-                    + f"Recommendation: {recommended_action}" \
+                    + f"Recommendation: {recommended_action}\n" \
                     + f"Date Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} \n" \
                     + f"Stock: <a href=\"{link}\">{inventory['Ticker']}</a> \n" \
                     + f"Current Price: {currency} {round(current_price,2)} \n" \
@@ -94,6 +94,7 @@ class stockfinder_technical_breakout:
                     + f"K: {np.round(inventory['K'],2)} \n" \
                     + f"D: {np.round(inventory['D'],2)} \n" \
                     + f"Potential: {np.round(inventory['Potential'],2)} \n" \
+                    + f"Days On Market: {stock_utils.get_market_days(inventory['Buy Date'], self.day)} \n" \
                     + f"G/L: {currency}{np.round((current_price - inventory['Buy Price']) * inventory['Position'], 2)} ({np.round((current_price - inventory['Buy Price']) / inventory['Buy Price'] * 100, 2)}%) \n" \
                     
                 t.send_message(message)
@@ -107,13 +108,16 @@ class stockfinder_technical_breakout:
         t = telegram()
 
         # Check market breadth
-        if(not self.benchmark_data[self.benchmark_data.index == str(self.day.date())].empty):
-            if not self.benchmark_data[self.benchmark_data.index == str(self.day.date())]['buy'].values[-1]:
+        
+        if(not self.benchmark_data["buy"].empty):
+            if not self.benchmark_data["buy"][-1]:
                 # Declines > Advanced
+                advances = self.benchmark_data["advances"][-1]
+                declines = self.benchmark_data["declines"][-1]
                 message = f"<u><b>Market Breadth</b></u>\n" \
-                    + f"Advances: {self.benchmark_data[self.benchmark_data.index == str(self.day.date())]['advances']}" \
-                    + f"Declines: {self.benchmark_data[self.benchmark_data.index == str(self.day.date())]['declines']}" \
-                    + f"<b>DO NOT TRADE TODAY<b/> \n"
+                    + f"Advances: {advances}\n" \
+                    + f"Declines: {declines}\n" \
+                    + f"<b>DO NOT TRADE TODAY</b> \n"
                     
                 t.send_message(message)
                 exit()
@@ -153,6 +157,8 @@ class stockfinder_technical_breakout:
                 hold_till_date = stock_utils.get_market_real_date(self.market, today, self.hold_till)
 
                 position_factor = self.buy_position_factor(inventories, current_price)
+                advances = self.benchmark_data["advances"][-1]
+                declines = self.benchmark_data["declines"][-1]
 
                 currency = ''
                 link = ''
@@ -189,7 +195,7 @@ class stockfinder_technical_breakout:
                     + f"K: {np.round(k,2)}\n" \
                     + f"D: {np.round(d,2)}\n" \
                     + f"Potential: {np.round(potential,2)}\n" \
-                    + f"Market Breadth: {self.benchmark_data['advances'][-1] - self.benchmark_data['declines'][-1]}\n" \
+                    + f"Market Breadth: {int(np.round(advances/(advances+declines) * 100, 0))}:{int(np.round(declines/(advances+declines) * 100, 0))}\n" \
                     + f"Hold till: {(hold_till_date).strftime('%Y-%m-%d')} ({int(self.hold_till)} days)\n" 
 
                 t.send_message(message)

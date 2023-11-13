@@ -1,0 +1,12 @@
+============== PARAMS ==============
+Market: JP
+No. of stocks: 398
+Model: stoch_k_d_v2 
+Start Date: 2013-11-10 08:47:19.898886 
+End Date: 2023-11-08 08:47:19.898886 
+
+============== Result Summary ==============
+Initial Balance: 22700000.00 
+Final Balance: 126009913.69 
+Total Gain: 103309913.69 
+P/L: 455.11 % 

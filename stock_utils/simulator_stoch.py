@@ -137,10 +137,7 @@ class simulator_stoch:
             print_bag += f'\n{bcolors.FAIL}Today Capital: {np.round(self.buying_power + today_stock_value, 2)} ({np.round(((self.buying_power + today_stock_value) / self.initial_capital * 100),2)}%){bcolors.ENDC}'
             print_bag += f'\n{bcolors.FAIL}Buying Power: {np.round(self.buying_power, 2)}{bcolors.ENDC}'            
 
-        if(date.day == 28):
-            self.log(print_bag, True)
-        else: 
-            self.log(print_bag, False)
+        self.log(print_bag, False)
 
     def create_summary(self, print_results = False):
         """
